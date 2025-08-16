@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>シンプルな地図</title>
+    <style>
+      /* ページの余白をなくし、地図を全画面表示にするためのスタイル */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+
+      .map-button {
+            position: absolute;
+            z-index: 5;
+            background-color: #fff;
+            padding: 8px;
+            border: 2px solid #fff;
+            border-radius: 3px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.3);
+            cursor: pointer;
+            font-family: Roboto, sans-serif;
+            font-size: 42px;
+            text-align: center;
+      }
+      .map-button:hover { background-color: #f4f4f4; }//青っぽい色
+
+      /* ★ 各ボタンの位置を設定 */
+      #start-tracking-button { top: 100px; right: 10px; }
+      #stop-tracking-button { top: 100px; right: 10px; display: none; } /* 初期状態は非表示 */
+      #reset-center-button { top: 10px; right: 10px; } /* ★ 新しいボタンの位置 */
+
+      /* --- ボトムシート関連のスタイル --- */
+
+      .bottom-sheet-container {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          max-height: 60%; /* 画面の高さの最大60%まで */
+          background-color: white;
+          box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+          border-top-left-radius: 16px;
+          border-top-right-radius: 16px;
+          
+          display: flex;
+          flex-direction: column; /* 中の要素を縦に並べる */
+          
+          transform: translateY(100%); /* ★ 初期状態では画面下に隠す */
+          transition: transform 0.3s ease-in-out; /* ★ アニメーション設定 */
+          z-index: 1000; /* 他の要素より手前に表示 */
+      }
+
+      /* 表示状態にするためのクラス */
+      .bottom-sheet-container.is-visible {
+          transform: translateY(0); /* ★ 画面内にスライドイン */
+      }
+
+      /* ヘッダー部分のスタイル */
+      .sheet-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          border-bottom: 1px solid #e0e0e0;
+          flex-shrink: 0; /* ヘッダーは縮まないようにする */
+      }
+      .sheet-header h3 {
+          margin: 0;
+          font-size: 48px;
+      }
+      #close-sheet-button {
+          background: none;
+          border: none;
+          font-size: 144px;
+          cursor: pointer;
+          padding: 0 8px;
+      }
+
+      /* コンテンツ（部屋リスト）部分のスタイル */
+      .sheet-content {
+          overflow-y: auto; /* ★ コンテンツがはみ出たらスクロール */
+          padding: 8px;
+          flex-grow: 1; /* 残りの高さをすべて使う */
+      }
+
+      /* 部屋リストの各行のスタイル */
+      .room-item {
+          display: flex;
+          align-items: center;
+          padding: 12px 8px;
+          border-bottom: 1px solid #f0f0f0;
+      }
+      .room-item-name {
+          flex-grow: 1; /* 部屋番号が残りの幅をすべて使う */
+          font-size: 48px;
+      }
+      .room-item-actions button {
+          margin-left: 8px;
+          padding: 12px 24px;
+          font-size: 48px; 
+          border: 1px solid #ccc;
+          border-radius: 16px;
+          background-color: #f8f9fa;
+          cursor: pointer;
+      }
+      .room-item-actions button.active {
+          background-color: #007bff; /* 例：アクティブなボタンの色 */
+          color: white;
+          border-color: #007bff;
+      }
+
+      /* --- 部屋リストのステータス別スタイル --- */
+
+      .room-item.status-refused { /* 拒否 */
+          background-color: #f8d7da; /* 薄い赤 */
+      }
+      .room-item.status-refused .room-item-name {
+          color: #721c24; /* 濃い赤 */
+          font-weight: bold;
+      }
+
+      .room-item.status-long-term-aq { /* 長期 (AQ) */
+          background-color: #fff3cd; /* 薄い黄 */
+      }
+      .room-item.status-long-term-aq .room-item-name {
+          color: #856404; /* 濃い黄 */
+      }
+
+      .room-item.status-long-term-as { /* 長期 (AT) */
+          background-color: #d4edda; /* 薄い緑 */
+      }
+      .room-item.status-long-term-as .room-item-name {
+          color: #155724; /* 濃い緑 */
+      }
+
+      .room-item.status-vacant { /* 空 */
+          background-color: #e2e3e5; /* 薄い灰色 */
+      }
+      .room-item.status-vacant .room-item-name {
+          color: #383d41; /* 濃い灰色 */
+          text-decoration: line-through; /* 取り消し線 */
+      }
+
+      /* マーカーのコンテナ（土台）のスタイル */
+      .css-marker {
+        width: 96px;           /* 幅 */
+        height: 96px;          /* 高さ */
+        border-radius: 50%;    /* ★ これで要素が正円になる */
+        position: relative; /* ★ 重ね合わせの基準にするため */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* 影を追加 */
+        cursor: pointer; /* クリックできることを示すカーソル */
+      }
+
+      .overlay { /* 共通スタイルをまとめる */
+        position: absolute;
+        top: 0; 
+        left: 0;
+        width: 100%; 
+        height: 100%;
+        border-radius: 50%;
+        color: white;
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-shadow: 2px 3px 5px rgba(0,0,0,0.5); /* 影を共通化 */
+        display: none;
+      }
+
+      /* ★ 個別のスタイル */
+      /* ベースとなる文字のスタイル */
+      .marker-text {
+          font-size: 48px;
+      }
+
+      /* レ点と"P"の共通スタイル */
+      .checkmark-overlay, .p-overlay {
+          font-size: 72px;
+      }
+
+      .apartment-marker, .autolock-marker {
+          display: flex; /* これらはtextContentを中央揃えにするために必要 */
+          justify-content: center;
+          align-items: center;
+          font-weight: bold;
+      }
+      .apartment-marker {
+          background-color: white;
+          color: #007BFF;
+          font-size: 54px;
+      }
+      .autolock-marker {
+          background-color: white;
+          color: #6f42c1;
+          font-size: 50px;
+      }
+      
+
+    </style>
+  </head>
+  <body>
+    <button id="start-tracking-button" class="map-button">現在地表示</button>
+    <button id="stop-tracking-button" class="map-button">現在地非表示</button>
+    <button id="reset-center-button" class="map-button">初期位置に戻る</button>
+    <!-- 地図を表示するための div 要素 -->
+    <div id="map"></div>
+
+    <!-- ★★★ ボトムシート用のHTML要素を追加 ★★★ -->
+    <div id="bottom-sheet-container" class="bottom-sheet-container">
+        <div class="sheet-header">
+            <h3 id="sheet-title"></h3>
+            <button id="close-sheet-button">&times;</button>
+        </div>
+        <div id="sheet-content" class="sheet-content">
+            <!-- 部屋リストはここに動的に挿入される -->
+        </div>
+    </div>
+
+    <?!= include('db'); ?>
+
+    <script>
+
+      // ★ テンプレート構文でGASからIDを受け取る
+      const SPREADSHEET_ID = '<?!= spreadsheetId ?>';
+      const SECRET_TOKEN = '<?!= secretToken ?>';
+      const WEB_APP_URL = '<?!= ScriptApp.getService().getUrl() ?>';
+      //const WEB_APP_URL = 'https://n-pexkzz2l72cladtn4zuxtryirrsvet5hjb6xwgi-0lu-script.googleusercontent.com';
+
+      
+      let map;
+      let initialCenterPosition = null;
+      let watchId = null; // watchPositionのIDを保存する
+      let currentLocationMarker = null; // 現在地マーカーを保存する
+
+      // index.html の <script> タグのグローバルスコープ
+
+      /**
+       * ステータス更新を処理する共通関数 (オフライン対応)
+       * @param {object} updateOptions - 更新に関する情報
+       * @param {function} updateUI - UIを更新するための関数
+       * @param {function} rollbackUI - 失敗時にUIを元に戻すための関数
+      */
+
+      // ★ ボトムシートの要素を取得
+      const bottomSheet = document.getElementById('bottom-sheet-container');
+      const sheetTitle = document.getElementById('sheet-title');
+      const sheetContent = document.getElementById('sheet-content');
+      const closeSheetButton = document.getElementById('close-sheet-button');
+
+      // ★★★ 向きを処理する関数を定義 ★★★
+      const handleOrientation = (event) => {
+          // マーカーが存在しない場合は何もしない
+          if (!currentLocationMarker) return;
+          
+          // iOS SafariはwebkitCompassHeadingプロパティを持つ (0が真北)
+          const heading = event.webkitCompassHeading || event.alpha;
+          
+          if (heading !== null) {
+              const icon = currentLocationMarker.getIcon();
+              icon.rotation = heading; // アイコンの回転角度を更新
+              currentLocationMarker.setIcon(icon); // 更新したアイコンを再設定
+          }
+      };
+
+      // ★ Service Worker登録 & 初期情報送信
+      if ('serviceWorker' in navigator) {
+        const swUrl = WEB_APP_URL + '?path=service-worker';
+        navigator.serviceWorker.register(swUrl)
+          .then(registration => {
+              console.log('Service Worker registered');
+              // SWが有効になったら初期情報を送信
+              if (registration.active) {
+                  registration.active.postMessage({
+                      type: 'INIT_CONFIG',
+                      webAppUrl: WEB_APP_URL,
+                      spreadsheetId: SPREADSHEET_ID,
+                      secretToken: SECRET_TOKEN // ★ ここでトークンを渡す
+                  });
+              }
+          });
+      }
+
+      function initMap() {
+
+        initializeMapAndFeatures(); // 直接初期化処理を開始
+      } 
+
+      // [2] アプリの起動シーケンスを管理
+      async function initializeMapAndFeatures() {
+          try {
+              // 2-1. まず仮の中心地で地図を生成
+              const temporaryCenter = { lat: 33.55850044, lng: 130.5252128 };
+              map = new google.maps.Map(document.getElementById("map"), {
+                  zoom: 20, // 広域
+                  center: temporaryCenter,
+                  mapId: "94c5c628b879c42c946ab547",
+                  streetViewControl: false,
+                  fullscreenControl: false,
+                  zoomControl: false,
+                  scaleControl: false,
+                  gestureHandling: 'greedy',
+                  disableDoubleClickZoom: true
+              });
+              
+              // 2-2. オンラインなら起動時同期を実行
+              // if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
+
+              // 2-3. サーバーからデータを取得
+              const data = await fetchDataFromServer();
+              
+              if (data.error) {
+                  onFailure({ message: data.error });
+                  return;
+              }
+
+              // 2-4. 取得したデータで地図の中心とズームを再設定
+              initialCenterPosition = data.initialCenter || temporaryCenter;
+              map.setCenter(initialCenterPosition);
+              map.setZoom(20);
+
+              // 2-5. マーカーやポリゴンを描画
+              drawFeatures(data.features);
+
+              // 2-6. UIのイベントリスナーを設定
+              setupEventListeners();
+
+          } catch (error) {
+              onFailure(error);
+          }
+      }
+
+      // [3] サーバーからデータを取得する部分
+      function fetchDataFromServer() {
+          return new Promise((resolve, reject) => {
+              google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(reject)
+                  .getMapData(SPREADSHEET_ID);
+          });
+      }
+      
+      // [4] UIのイベントリスナーをまとめて設定する部分
+      function setupEventListeners() {
+          const resetButton = document.getElementById('reset-center-button');
+          const startButton = document.getElementById("start-tracking-button");
+          const stopButton = document.getElementById("stop-tracking-button");
+          
+          resetButton.addEventListener('click', () => {
+              if (map && initialCenterPosition) {
+                  map.panTo(initialCenterPosition);
+                  map.setZoom(20);
+              }
+          });
+
+          startButton.addEventListener("click", () => {
+              if (watchId !== null) return;
+              // ... (追跡開始のロジック)
+              if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                  // ...
+              }
+              if (navigator.geolocation) {
+                  watchId = navigator.geolocation.watchPosition(// 成功時のコールバック（位置が変わるたびに呼ばれる）
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+
+                        // マーカーがなければ新規作成、あれば位置を更新
+                        if (!currentLocationMarker) {
+                            currentLocationMarker = new google.maps.Marker({
+                                position: pos,
+                                map: map,
+                                icon: {
+                                  path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, // 矢印シンボル
+                                  scale: 12,
+                                  fillColor: "#4285F4",
+                                  fillOpacity: 1,
+                                  strokeColor: "white",
+                                  strokeWeight: 2,
+                                  rotation: 0 // 初期角度
+                                    },
+                                title: "あなたの現在地"
+                            });
+                        } else {
+                            currentLocationMarker.setPosition(pos);
+                        }
+                        
+                        // 地図の中心をスムーズに移動
+                        map.panTo(pos);
+                    },
+                    // 失敗時のコールバック
+                    () => { handleLocationError(true, map.getCenter()); }
+                );
+                  startButton.style.display = 'none';
+                  stopButton.style.display = 'block';
+              }
+          });
+
+          stopButton.addEventListener("click", () => {
+              if (watchId !== null) {
+                  navigator.geolocation.clearWatch(watchId);
+                  watchId = null;
+                  window.removeEventListener('deviceorientation', handleOrientation);
+                  if (currentLocationMarker) {
+                      currentLocationMarker.setMap(null);
+                      currentLocationMarker = null;
+                  }
+                  startButton.style.display = 'block';
+                  stopButton.style.display = 'none';
+              }
+          });
+
+          closeSheetButton.addEventListener('click', () => {
+              bottomSheet.classList.remove('is-visible');
+          });
+      }
+
+      /*
+
+      async function initializeMapAndFeatures() {
+        try {
+            // まず空の地図を表示
+            // 地図のオプションを設定
+            const temporaryCenter = { lat: 33.55850044, lng: 130.5252128 };
+            map = new google.maps.Map(document.getElementById("map"), {
+              zoom: 20,          // ズームレベル (1〜20程度、大きいほど拡大)
+              center: temporaryCenter,  // 地図の中心座標
+              mapId: "94c5c628b879c42c946ab547",
+              streetViewControl: false,
+              fullscreenControl: false,
+              zoomControl: false,         // 「+/-」のズームボタンを消す
+              scaleControl: false,        // 地図の縮尺（スケール）を消す
+              gestureHandling: 'greedy',//指一本で操作
+              disableDoubleClickZoom: true
+            });
+            
+            // オンラインなら起動時同期
+            if (navigator.onLine) await syncLocalDataWithServer();
+
+            // サーバーから最新データを取得して描画
+            const data = await fetchDataFromServer();
+            initialCenterPosition = data.initialCenter || temporaryCenter;
+            map.setCenter(initialCenterPosition);
+            drawFeatures(data.features);
+
+            setupEventListeners(); // ボタンのイベントリスナーをセット
+
+        } catch (error) {
+            onFailure(error);
+            // ここでオフライン時のデータ表示ロジックを追加
+        }
+      }
+
+
+
+
+      async function initializeMapAndFeatures() {
+        if (data.error) { onFailure({ message: data.error }); return; }
+        initialCenterPosition = data.initialCenter || { lat: 33.56897815968571, lng: 130.51328785946967 };//宇美駅
+
+        // 地図のオプションを設定
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 20,          // ズームレベル (1〜20程度、大きいほど拡大)
+          center: initialCenterPosition,  // 地図の中心座標
+          mapId: "94c5c628b879c42c946ab547",
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControl: false,         // 「+/-」のズームボタンを消す
+          scaleControl: false,        // 地図の縮尺（スケール）を消す
+          gestureHandling: 'greedy',//指一本で操作
+          disableDoubleClickZoom: true
+        });
+
+        // ★★★ 修正点1: 正しい引数を渡して drawFeatures を呼び出す ★★★
+        drawFeatures(data.features); // 'data'オブジェクトの中の'features'配列を渡す
+
+        if ('serviceWorker' in navigator) {
+          // Service Workerに初期設定情報を送信
+            navigator.serviceWorker.ready.then(registration => {
+                registration.active.postMessage({
+                    type: 'INIT',
+                    webAppUrl: '<?!= ScriptApp.getService().getUrl() ?>',
+                    spreadsheetId: SPREADSHEET_ID
+                });
+            });
+        }
+
+        // --- 2. 起動時同期の実行 ---
+        if (navigator.onLine) {
+          await syncLocalDataWithServer();
+        }
+        
+        // --- 3. 地図データの表示 ---
+        // 本来はサーバーから取得するが、オフライン対応のためIndexedDBからも読めるようにする
+        // (この部分は複雑なので、まずはオンライン時の動作を実装)
+        const data = await fetchData(); // 新しいデータ取得関数
+        drawFeatures(data.features);
+
+        // --- ★★★ ここからが「初期位置に戻る」ボタンのロジック ★★★ ---
+        const resetButton = document.getElementById('reset-center-button');
+
+        resetButton.addEventListener('click', () => {
+            // 保存しておいた初期位置に地図の中心を移動
+            if (map && initialCenterPosition) {
+                map.panTo(initialCenterPosition); // スムーズに移動
+                map.setZoom(20); // ★ ズームレベルも初期状態に戻す
+            }
+        });
+        // --- ★★★ ロジックここまで ★★★ ---
+
+       // --- ★ ここからがリアルタイム追跡機能のコード ---
+            
+        const startButton = document.getElementById("start-tracking-button");
+        const stopButton = document.getElementById("stop-tracking-button");
+
+        // 「追跡開始」ボタンの処理
+        startButton.addEventListener("click", () => {
+            // 既に追跡中の場合は何もしない
+            if (watchId !== null) return;
+
+            // --- ★ デバイスの向きの監視を開始する処理を追加 ---
+            // iOS 13+ の対応
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            // 許可されたら、向きの監視を開始
+                            window.addEventListener('deviceorientation', handleOrientation);
+                        } else {
+                            alert("向きの表示を許可されませんでした。");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // iOS以外、または古いiOSの場合
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+                // --- ★ 向きの監視開始処理ここまで ---
+
+            if (navigator.geolocation) {
+                // watchPositionで位置情報の監視を開始
+                watchId = navigator.geolocation.watchPosition(
+                    // 成功時のコールバック（位置が変わるたびに呼ばれる）
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+
+                        // マーカーがなければ新規作成、あれば位置を更新
+                        if (!currentLocationMarker) {
+                            currentLocationMarker = new google.maps.Marker({
+                                position: pos,
+                                map: map,
+                                icon: {
+                                  path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, // 矢印シンボル
+                                  scale: 12,
+                                  fillColor: "#4285F4",
+                                  fillOpacity: 1,
+                                  strokeColor: "white",
+                                  strokeWeight: 2,
+                                  rotation: 0 // 初期角度
+                                    },
+                                title: "あなたの現在地"
+                            });
+                        } else {
+                            currentLocationMarker.setPosition(pos);
+                        }
+                        
+                        // 地図の中心をスムーズに移動
+                        map.panTo(pos);
+                    },
+                    // 失敗時のコールバック
+                    () => { handleLocationError(true, map.getCenter()); }
+                );
+                
+                // ボタンの表示を切り替え
+                startButton.style.display = 'none';
+                stopButton.style.display = 'block';
+
+            } else {
+                handleLocationError(false, map.getCenter());
+            }
+        });
+
+        // 「追跡停止」ボタンの処理
+        stopButton.addEventListener("click", () => {
+            if (watchId !== null) {
+                // watchPositionを停止
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+
+                // --- ★ デバイスの向きの監視を停止する処理を追加 ---
+                window.removeEventListener('deviceorientation', handleOrientation);
+
+                // 2. マーカーが地図上に存在する場合、削除する
+                if (currentLocationMarker) {
+                    currentLocationMarker.setMap(null); // ★ この行を追加
+                    currentLocationMarker = null;     // ★ 変数もリセット（次の追跡開始に備える）
+                }
+                
+                // ボタンの表示を切り替え
+                startButton.style.display = 'block';
+                stopButton.style.display = 'none';
+            }
+        });
+      }
+
+      */
+
+      
+      // エラー処理用の関数
+      function handleLocationError(browserHasGeolocation, pos) {
+          const infoWindow = new google.maps.InfoWindow({
+              position: pos,
+          });
+          infoWindow.setContent(
+              browserHasGeolocation
+                  ? "エラー: 位置情報サービスに失敗しました。"
+                  : "エラー: お使いのブラウザは位置情報サービスに対応していません。"
+          );
+          infoWindow.open(map);
+      }
+
+       // ★ サーバーからデータを取得するPromiseベースの関数
+      function fetchDataFromServer() {
+          return new Promise((resolve, reject) => {
+              google.script.run
+                  .withSuccessHandler(resolve)
+                  .withFailureHandler(reject)
+                  .getMapData(SPREADSHEET_ID);
+          });
+      }
+
+     // ★★★ 修正点2: drawFeatures は features 配列を直接受け取るように変更 ★★★
+      function drawFeatures(features) { // 引数名を 'features' に変更して分かりやすく
+        // 'data.error' のチェックは initializeMapAndFeatures で済んでいるので不要
+        
+        // features が配列であり、中身があるかチェック
+        if (!features || features.length === 0) {
+            console.log("描画するデータがありません。");
+            return;
+        }
+
+        // ★ features 配列を直接ループ処理
+        features.forEach(item => {
+            if (item.type === 'apartment') {
+                placeApartmentMarker(item);
+            } else if (item.type === 'autolock') {
+                placeAutolockMarker(item);
+            } else if (item.type === 'marker') {
+                placeStaticMarker(item);
+            } else if (item.type === 'polygon') {
+                drawPolygon(item);
+            }
+        });
+      }
+
+      // ===============================================
+      // 4. マーカー・ポリゴン描画ヘルパー関数
+      // ===============================================
+
+      // ★ マーカー生成を補助するヘルパー関数
+      function createAdvancedMarker(markerData, contentDiv) {
+          return new google.maps.marker.AdvancedMarkerElement({
+              position: { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) },
+              map: map,
+              content: contentDiv,
+              title: markerData.name
+          });
+      }
+      
+      // ★★★ スプレッドシートのデータから静的マーカーを配置する新しい関数 ★★★
+      function placeStaticMarker(markerData) {
+        // --- 1. 定数と状態の定義 ---
+        const STATE_DEFAULT = 0;
+        const STATE_CHECKED = 1;
+        const STATE_P = 2;
+        
+        const STATUS_VALUES = {
+            [STATE_DEFAULT]: "",
+            [STATE_CHECKED]: "会えた",
+            [STATE_P]: "P"
+        };
+        // 1. マーカーのコンテンツとなるdiv要素を作成
+        const markerDiv = document.createElement("div");
+        markerDiv.className = "css-marker"; // 上で定義したCSSクラスを適用
+
+        const statusAQ = markerData.statusAQ;
+        const statusAS = markerData.statusAS;
+
+        // ★★★ ここの判定ロジックを修正 ★★★
+        let backgroundColor = "#007BFF"; // デフォルトの色（青色など）
+        let textContent = markerData.name || "?";
+
+        if (statusAQ === '長期') {
+            backgroundColor = "#FFC107"; // 黄色 (Bootstrapのwarning色)
+        } else if (statusAQ === '拒否') {
+            backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
+        } else if (statusAQ === '空') {
+            backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
+        } else if (statusAS === '長期') {
+            // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
+            backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
+        }
+
+         // ★★★ innerHTMLの生成を一度で行う ★★★
+        markerDiv.innerHTML = `
+          <div class="overlay marker-text">${textContent.substring(0, 1)}</div>
+          <div class="overlay checkmark-overlay">✓</div>
+          <div class="overlay p-overlay">P</div>
+        `;
+        markerDiv.style.backgroundColor = backgroundColor;
+        
+        // 3. ★★★ HTML要素を追加した後で、各要素を取得する ★★★
+        const textOverlay = markerDiv.querySelector('.marker-text');
+        const checkmarkOverlay = markerDiv.querySelector('.checkmark-overlay');
+        const pOverlay = markerDiv.querySelector('.p-overlay');
+
+        // ★★★ JSで表示/非表示を明確に制御 ★★★
+        textOverlay.style.display = 'flex'; // ベースの文字は常に表示
+        
+        // ヘルパー関数を呼び出す
+        const marker = createAdvancedMarker(markerData, markerDiv);
+
+        // --- 4. クリックイベントのロジックを3段階サイクルに修正 ---
+
+        // a. 初期状態を数値で決定
+        let currentState = STATE_DEFAULT;
+        if (markerData.initialStateValue === '会えた') {
+            currentState = STATE_CHECKED;
+        } else if (markerData.initialStateValue === 'P') {
+            currentState = STATE_P;
+        }
+
+        // b. 初期状態の見た目を反映させる関数
+        function updateAppearance(state) {
+            checkmarkOverlay.style.display = (state === STATE_CHECKED) ? 'flex' : 'none';
+            pOverlay.style.display = (state === STATE_P) ? 'flex' : 'none';
+        }
+        updateAppearance(currentState); // 初期表示
+
+        // c. クリックイベントリスナー
+        markerDiv.addEventListener('click', () => {
+           const oldState = currentState;
+            // 状態を次の段階に進める (0 -> 1 -> 2 -> 0)
+            //currentState = (currentState + 1) % 3;
+            
+            // 見た目を即座に更新
+            updateAppearance(currentState);
+            
+            // スプレッドシートに書き込む値を取得
+            currentState = (currentState + 1) % 3;
+            const valueToSet = STATUS_VALUES[currentState];
+
+             // ★★★ ここを差し替え ★★★
+            handleStatusUpdate(
+                { rowNumber: markerData.rowNumber, valueToSet: valueToSet }, // 更新オプション
+                () => updateAppearance(currentState), // UI更新関数
+                () => { // ロールバック関数
+                    currentState = oldState;
+                    updateAppearance(oldState);
+                }
+            );
+        });
+        
+      }
+
+      function drawPolygon(polygonData) {
+        const rawData = polygonData.rawData;
+        let wkt = '';
+        let name = '';
+
+        // "))," を区切り文字としてWKTと名前を分離するロジック
+        const wktEndDelimiter = ')),';
+        const delimiterIndex = rawData.indexOf(wktEndDelimiter);
+
+        if (delimiterIndex !== -1) {
+            // WKT部分は "POLYGON..." から "))" まで
+            wkt = rawData.substring(0, delimiterIndex + 2); // "))" の2文字分を含める
+            // 名前部分は、区切り文字の後から始まり、最後のカンマを取り除く
+            name = rawData.substring(delimiterIndex + wktEndDelimiter.length).replace(/,$/, '').trim();
+        } else {
+            // 区切り文字が見つからない場合は、全体がWKTデータだと仮定する
+            wkt = rawData;
+            name = '名前なし';
+        }
+
+
+        const coordString = wkt.match(/\(\((.*)\)\)/);
+        
+        if (!coordString || !coordString[1]) {
+          console.error("解析後のWKTデータが無効です:", wkt);
+          return;
+        }  
+        const path = coordString[1].split(',').map(pair => {
+            const coords = pair.trim().split(' ');
+            return { lat: parseFloat(coords[1]), lng: parseFloat(coords[0]) };
+        });
+        const polygon = new google.maps.Polygon({
+            paths: path,
+            strokeColor: "#000000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            fillOpacity: 0.0,
+            map: map,
+            clickable: false,
+        });
+        // (ポリゴンのクリックイベントなども必要ならここに追加)
+      }
+
+      // --- アパートマーカーを配置する関数を修正 ---
+      function placeApartmentMarker(apartmentData) {
+          const markerDiv = document.createElement("div");
+          markerDiv.className = "css-marker apartment-marker";
+          const displayText = apartmentData.key + "A"; 
+          markerDiv.textContent = displayText;
+        
+          const marker = createAdvancedMarker(apartmentData, markerDiv);
+
+          // ★ クリックイベントでボトムシートを表示する関数を呼び出す
+          marker.content.addEventListener('click', () => {
+              showBottomSheet(apartmentData);
+          });
+      }
+
+      // ★★★【追加】オートロック区域マーカーを配置する関数 ★★★
+      function placeAutolockMarker(markerData) {
+          const markerDiv = document.createElement("div");
+          markerDiv.className = "css-marker autolock-marker"; // 基本的なスタイル（円形、サイズなど）を適用
+          const displayText = markerData.key + "A"; 
+          markerDiv.textContent = displayText;
+
+          // オートロック用の特別なスタイルを設定
+          //markerDiv.style.backgroundColor = "#6f42c1"; // 紫色
+          //markerDiv.style.color = "white";
+          //markerDiv.textContent = "A";
+
+          const marker = new google.maps.marker.AdvancedMarkerElement({
+              position: { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) },
+              map: map,
+              content: markerDiv,
+              title: markerData.name
+          });
+
+          // オートロックマーカーはクリックイベントを持たない
+      }
+
+      // ★★★ ボトムシートを表示・制御する新しい関数 ★★★
+      function showBottomSheet(apartmentData) {
+          // 1. タイトルを設定
+          sheetTitle.textContent = apartmentData.name;
+          
+          // 2. コンテンツエリアを一旦空にする
+          sheetContent.innerHTML = '';
+
+          // 3. 部屋リストを生成
+          apartmentData.rooms.forEach(room => {
+              const roomItem = document.createElement('div');
+
+              // --- ★★★ ここからがステータス判定とクラス割り当て ★★★ ---
+              let statusClass = ''; // デフォルトはクラスなし
+
+              // 優先順位に従って判定
+              if (room.statusAQ === '拒否') {
+                  statusClass = 'status-refused';
+              } else if (room.statusAQ === '長期') {
+                  statusClass = 'status-long-term-aq';
+              } else if (room.statusAQ === '空') {
+                  statusClass = 'status-vacant';
+              } else if (room.statusAS === '長期') {
+                  statusClass = 'status-long-term-as';
+              }
+
+              // 判定されたクラスを room-item に追加
+              roomItem.className = `room-item ${statusClass}`;
+              // --- ★★★ 判定ロジックここまで ★★★ ---
+
+              //roomItem.className = 'room-item';
+              
+              // ★ 各部屋のHTMLを生成
+              roomItem.innerHTML = `
+                  <div class="room-item-name">${room.room}</div>
+                  <div class="room-item-actions">
+                      <button data-status="会えた" class="${room.status === '会えた' ? 'active' : ''}">会</button>
+                      <button data-status="P" class="${room.status === 'P' ? 'active' : ''}">P</button>
+                  </div>
+              `;
+
+              // 4. ステータス変更ボタンにイベントを追加
+              roomItem.querySelectorAll('.room-item-actions button').forEach(button => {
+                  button.addEventListener('click', () => {
+                      // クリックされたボタンのステータスを取得
+                      //const newStatus = button.dataset.status;
+                      
+                     // ★★★ 楽観的UI更新のロジック ★★★
+    
+                      // 1. まず、現在の状態を保存しておく（失敗時のロールバック用）
+                      const oldStatus = room.status;
+
+                      // 2. 新しい状態を計算し、ローカルデータを更新
+                      const newStatus = button.dataset.status;
+                      const valueToSet = (oldStatus === newStatus) ? "" : newStatus;
+                      room.status = valueToSet;
+
+                      // ★★★ ここを差し替え ★★★
+                      handleStatusUpdate(
+                          { rowNumber: room.row, valueToSet: valueToSet }, // 更新オプション
+                          () => { // UI更新関数
+                              room.status = valueToSet;
+                              updateRoomListAppearance(apartmentData);
+                          },
+                          () => { // ロールバック関数
+                              room.status = oldStatus;
+                              updateRoomListAppearance(apartmentData);
+                          }
+                      );
+                });
+              });
+
+              sheetContent.appendChild(roomItem);
+          });
+
+          // 5. ボトムシートを表示
+          bottomSheet.classList.add('is-visible');
+      }
+
+      // ★ 部屋リストの見た目を更新する補助関数
+      function updateRoomListAppearance(apartmentData) {
+          // 現在表示されているアパートが正しいかチェック
+          if (sheetTitle.textContent !== apartmentData.name) return;
+
+          sheetContent.querySelectorAll('.room-item').forEach((item, index) => {
+              const room = apartmentData.rooms[index];
+              const buttons = item.querySelectorAll('.room-item-actions button');
+              buttons.forEach(button => {
+                  if (button.dataset.status === room.status) {
+                      button.classList.add('active');
+                  } else {
+                      button.classList.remove('active');
+                  }
+              });
+          });
+      }
+
+      // ===============================================
+      // 6. オフライン・同期処理関連ヘルパー関数
+      // ===============================================
+
+      // ★★★ この位置に配置するのが適切 ★★★
+      async function syncLocalDataWithServer() {
+        
+        try {
+        const queue = await dbManager.getQueue();
+        if (queue.length === 0) return;
+        
+        const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
+
+        // ★ serverRequestを呼び出す
+        const responseData = await serverRequest('batchUpdateStatuses', { updates: updates });
+        
+        // responseDataには、GASのbatchUpdateStatusesが返した値("Batch update successful")が入る
+        console.log("Sync successful!", responseData);
+        await clearQueue();
+
+      } catch (error) {
+        // serverRequestでエラーが再スローされると、このcatchブロックが実行される
+        console.error("Sync failed:", error.message);
+      }
+        
+      }
+
+      async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
+        // 1. 楽観的UI更新：まず見た目を先に変える
+        updateUI();
+        
+        // 2. 更新内容をキュー(IndexedDB)に追加
+        // updateOptionsには { rowNumber, valueToSet } などが含まれる
+        await dbManager.putToQueue(updateOptions);
+        
+        // 3. バックグラウンド同期をリクエスト
+        try {
+          if ('serviceWorker' in navigator && 'SyncManager' in window) {
+            const sw = await navigator.serviceWorker.ready;
+            await sw.sync.register('sync-updates');
+            console.log('Background sync registered');
+          } else {
+            // SyncManager非対応ブラウザ用のフォールバック
+            if (navigator.onLine) {
+              await syncLocalDataWithServer();
+            }
+          }
+        } catch (error) {
+          console.error('Failed to handle status update:', error);
+          // もし同期リクエスト自体に失敗したら、UIを元に戻す
+          rollbackUI();
+          alert('更新リクエストの処理中にエラーが発生しました。');
+        }
+      }
+
+      // ★★★ サーバーとの通信を担う中央関数 ★★★
+
+      /**
+       * サーバーサイド（コード.gsのdoPost）にリクエストを送信する
+       * @param {string} action 実行したいサーバー関数の名前 (例: 'batchUpdateStatuses')
+       * @param {object} payload 送信するデータ (例: { updates: [...] })
+       * @returns {Promise<object>} サーバーからの応答データ
+       */
+      async function serverRequest(action, payload = {}) {
+        // 1. WebアプリのURLとシークレットトークンを定義
+        //    URLはテンプレート構文でGASから取得するのが最も確実
+        //const WEB_APP_URL = '<?!= ScriptApp.getService().getUrl() ?>';
+        
+        try {
+          // 2. fetchリクエストを送信
+          const response = await fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'cors', // クロスオリジンリクエストを許可
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: action,
+              spreadsheetId: SPREADSHEET_ID,
+              token: SECRET_TOKEN,
+              ...payload // ★ 引数で受け取ったpayloadを展開して含める
+            })
+          });
+
+          // 3. 応答をJSONとして解析
+          const result = await response.json();
+
+          // 4. サーバー側でエラーが返ってきた場合の処理
+          if (!response.ok || !result.success) {
+            // result.messageがあればそれを使う、なければHTTPステータスを使う
+            const errorMessage = result.message || `HTTP error! status: ${response.status}`;
+            throw new Error(errorMessage);
+          }
+          
+          // 5. 成功したデータを返す
+          return result.data;
+
+        } catch (error) {
+          // 6. 通信エラーやJSON解析エラーが発生した場合の処理
+          console.error('serverRequest Error:', error);
+          // エラーを再スローして、呼び出し元でcatchできるようにする
+          throw error;
+        }
+      }
+
+
+      // --- 閉じるボタンのイベントリスナー ---
+      closeSheetButton.addEventListener('click', () => {
+          bottomSheet.classList.remove('is-visible');
+      });
+
+      function onFailure(error) {
+            alert("データの読み込みに失敗しました。\n詳細: " + error.message);
+            console.error(error);
+      }
+      
+
+
+    </script>
+    
+    <!-- Maps JavaScript API を読み込むための script タグ -->
+    <!-- ★★★ YOUR_API_KEY の部分を自分のAPIキーに置き換えてください ★★★ -->
+    <script 
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCq2124_qXWW0e4KA06N9oJ8IoYWe9IziY&callback=initMap&libraries=marker" defer>
+    </script>
+  </body>
+</html>
