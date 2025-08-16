@@ -1,0 +1,40 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    # ブランチに応じて環境を動的に設定
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Replace tokens
+        run: |
+          # プレースホルダーを環境変数（Secretsから注入）で置換する
+          sed -i "s|__SPREADSHEET_ID__|${{ secrets.SPREADSHEET_ID }}|g" index.html
+          sed -i "s|__WEB_APP_URL__|${{ secrets.WEB_APP_URL }}|g" index.html
+          sed -i "s|__SECRET_TOKEN__|${{ secrets.SECRET_TOKEN }}|g" index.html
+          # 他のファイルも必要なら置換する
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
