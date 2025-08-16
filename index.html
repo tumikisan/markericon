@@ -220,15 +220,16 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script src="db.js"></script> 
-
+    
     <script>
 
       // ★ テンプレート構文でGASからIDを受け取る
-      const SPREADSHEET_ID = '<?!= spreadsheetId ?>';
-      const SECRET_TOKEN = '<?!= secretToken ?>';
-      const WEB_APP_URL = '<?!= ScriptApp.getService().getUrl() ?>';
-      //const WEB_APP_URL = 'https://n-pexkzz2l72cladtn4zuxtryirrsvet5hjb6xwgi-0lu-script.googleusercontent.com';
+      const params = new URLSearchParams(window.location.search);
+    　const SPREADSHEET_ID = params.get('id'); // URLの'?id=...'の値を取得
+      const WEB_APP_URL = config.webAppUrl;
+    　const SECRET_TOKEN = config.secretToken;
 
       
       let map;
@@ -273,6 +274,11 @@
         }
 
       function initMap() {
+        // IDがURLで指定されていない場合のガード処理
+        if (!SPREADSHEET_ID) {
+            document.body.innerHTML = "<h1>エラー: 表示するスプレッドシートが指定されていません。</h1><p>URLの末尾に ?id=... を付けてください。</p>";
+            return;
+        }
 
         initializeMapAndFeatures(); // 直接初期化処理を開始
       } 
@@ -325,7 +331,7 @@
       // [3] サーバーからデータを取得する部分
       // ★★★ サーバー通信関数をgoogle.script.runからfetchに完全移行 ★★★
       async function fetchDataFromServer(spreadsheetId) {
-            return await serverRequest('getMapData', { spreadsheetId: spreadsheetId });
+            return await serverRequest('getMapData', { spreadsheetId: SPREADSHEET_ID });
         }
       
       // [4] UIのイベントリスナーをまとめて設定する部分
@@ -1071,4 +1077,5 @@
     </script>
   </body>
 </html>
+
 
