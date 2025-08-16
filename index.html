@@ -220,7 +220,7 @@
         </div>
     </div>
 
-    <?!= include('db'); ?>
+    <script src="db.js"></script> 
 
     <script>
 
@@ -266,23 +266,11 @@
           }
       };
 
-      // ★ Service Worker登録 & 初期情報送信
-      if ('serviceWorker' in navigator) {
-        const swUrl = WEB_APP_URL + '?path=service-worker';
-        navigator.serviceWorker.register(swUrl)
-          .then(registration => {
-              console.log('Service Worker registered');
-              // SWが有効になったら初期情報を送信
-              if (registration.active) {
-                  registration.active.postMessage({
-                      type: 'INIT_CONFIG',
-                      webAppUrl: WEB_APP_URL,
-                      spreadsheetId: SPREADSHEET_ID,
-                      secretToken: SECRET_TOKEN // ★ ここでトークンを渡す
-                  });
-              }
-          });
-      }
+      // ★ Service Workerの登録パスをシンプルに
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+              .then(() => console.log('Service Worker registered'));
+        }
 
       function initMap() {
 
@@ -310,7 +298,8 @@
               // if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
 
               // 2-3. サーバーからデータを取得
-              const data = await fetchDataFromServer();
+              // ★ fetchDataFromServerの呼び出し方が変わる
+                const data = await fetchDataFromServer(SPREADSHEET_ID);
               
               if (data.error) {
                   onFailure({ message: data.error });
@@ -334,14 +323,10 @@
       }
 
       // [3] サーバーからデータを取得する部分
-      function fetchDataFromServer() {
-          return new Promise((resolve, reject) => {
-              google.script.run
-                  .withSuccessHandler(resolve)
-                  .withFailureHandler(reject)
-                  .getMapData(SPREADSHEET_ID);
-          });
-      }
+      // ★★★ サーバー通信関数をgoogle.script.runからfetchに完全移行 ★★★
+      async function fetchDataFromServer(spreadsheetId) {
+            return await serverRequest('getMapData', { spreadsheetId: spreadsheetId });
+        }
       
       // [4] UIのイベントリスナーをまとめて設定する部分
       function setupEventListeners() {
@@ -954,26 +939,37 @@
 
       // ★★★ この位置に配置するのが適切 ★★★
       async function syncLocalDataWithServer() {
-        
-        try {
-        const queue = await dbManager.getQueue();
-        if (queue.length === 0) return;
-        
-        const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
+            const queue = await dbManager.getQueue();
+            if (queue.length === 0) return;
+            const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
+            
+            // ★ serverRequestを使って一括更新
+            await serverRequest('batchUpdateStatuses', { spreadsheetId: SPREADSHEET_ID, updates: updates });
+            
+            await dbManager.clearQueue();
+            console.log("Sync successful!");
+        }
 
-        // ★ serverRequestを呼び出す
-        const responseData = await serverRequest('batchUpdateStatuses', { updates: updates });
-        
-        // responseDataには、GASのbatchUpdateStatusesが返した値("Batch update successful")が入る
-        console.log("Sync successful!", responseData);
-        await clearQueue();
-
-      } catch (error) {
-        // serverRequestでエラーが再スローされると、このcatchブロックが実行される
-        console.error("Sync failed:", error.message);
-      }
-        
-      }
+      // ★★★ 新しいserverRequest関数 ★★★
+      async function serverRequest(action, payload = {}) {
+          const response = await fetch(WEB_APP_URL, {
+              method: 'POST',
+              // mode: 'cors' は不要になる（同一オリジンポリシーのため）
+              // ただし、GAS APIを呼び出すので必要
+              mode: 'cors', 
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  action,
+                  token: SECRET_TOKEN,
+                  ...payload
+              })
+          });
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+              throw new Error(result.message || 'Server request failed');
+          }
+          return result.data;
+        }
 
       async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
         // 1. 楽観的UI更新：まず見た目を先に変える
@@ -1075,3 +1071,4 @@
     </script>
   </body>
 </html>
+
