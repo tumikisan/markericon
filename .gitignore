@@ -1,0 +1,8 @@
+# Secrets and config files
+config.js
+
+# Node.js dependencies (もし将来的に使うなら)
+# node_modules/
+
+# Build output (もし将来的に使うなら)
+# dist/
