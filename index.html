@@ -241,6 +241,7 @@
         
         // 4. defer属性を設定して、非同期で読み込むようにする
         googleMapsScript.defer = true;
+        googleMapsScript.async = true;
         
         // 5. 生成した<script>要素を、ドキュメントの<head>の末尾に追加する
         document.head.appendChild(googleMapsScript);
@@ -879,6 +880,7 @@
     </script>
   </body>
 </html>
+
 
 
 
