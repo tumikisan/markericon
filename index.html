@@ -754,11 +754,13 @@
 
       // ★★★ 新しいserverRequest関数 ★★★
       async function serverRequest(action, payload = {}) {
+         try {
+          // ★★★ プリフライトの代わりとなるGETリクエストを先に送る ★★★
+          await fetch(`${WEB_APP_URL}?action=preflight`, { mode: 'cors' });
+           
           const response = await fetch(WEB_APP_URL, {
               method: 'POST',
-              // mode: 'cors' は不要になる（同一オリジンポリシーのため）
-              // ただし、GAS APIを呼び出すので必要
-              //mode: 'cors', 
+              mode: 'cors', 
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                   action,
@@ -771,7 +773,11 @@
               throw new Error(result.message || 'Server request failed');
           }
           return result.data;
+        } catch (error) {
+            console.error('serverRequest Error:', error);
+            throw error;
         }
+    }
 
       async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
         // 1. 楽観的UI更新：まず見た目を先に変える
@@ -879,6 +885,7 @@
     </script>
   </body>
 </html>
+
 
 
 
