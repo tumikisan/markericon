@@ -36,9 +36,9 @@ jobs:
           
           echo "--- End Debugging ---"
           # プレースホルダーを環境変数（Secretsから注入）で置換する
-          sed -i "s|__WEB_APP_URL__|URL_REPLACEMENT_SUCCESS|g" index.html
-          sed -i "s|__SECRET_TOKEN__|TOKEN_REPLACEMENT_SUCCESS|g" index.html
-          sed -i "s|__YOUR_API_KEY__|APIKEY_REPLACEMENT_SUCCESS|g" index.html
+          sed -i "s|__PLACEHOLDER_WEB_APP_URL__|${{ secrets.WEB_APP_URL }}|g" index.html
+          sed -i "s|__PLACEHOLDER_SECRET_TOKEN__|${{ secrets.SECRET_TOKEN }}|g" index.html
+          sed -i "s|__PLACEHOLDER_YOUR_API_KEY__|${{ secrets.YOUR_API_KEY }}|g" index.html
           # 他のファイルも必要なら置換する
 
       - name: Setup Pages
