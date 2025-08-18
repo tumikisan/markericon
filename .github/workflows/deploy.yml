@@ -6,6 +6,11 @@ on:
       - main
       - develop
 
+permissions: # ★ デプロイに必要な権限を追加
+  contents: read
+  pages: write
+  id-token: write      
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -17,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Replace tokens
         run: |
@@ -28,13 +33,13 @@ jobs:
           # 他のファイルも必要なら置換する
 
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
