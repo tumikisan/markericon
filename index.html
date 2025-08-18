@@ -777,7 +777,7 @@
             console.error('serverRequest Error:', error);
             throw error;
         }
-    }
+     }
 
       async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
         // 1. 楽観的UI更新：まず見た目を先に変える
@@ -815,6 +815,7 @@
        * @param {object} payload 送信するデータ (例: { updates: [...] })
        * @returns {Promise<object>} サーバーからの応答データ
        */
+      /*
       async function serverRequest(action, payload = {}) {
         // 1. WebアプリのURLとシークレットトークンを定義
         //    URLはテンプレート構文でGASから取得するのが最も確実
@@ -862,6 +863,7 @@
       closeSheetButton.addEventListener('click', () => {
           bottomSheet.classList.remove('is-visible');
       });
+      */
 
       function onFailure(error) {
             alert("データの読み込みに失敗しました。\n詳細: " + error.message);
@@ -885,6 +887,7 @@
     </script>
   </body>
 </html>
+
 
 
 
