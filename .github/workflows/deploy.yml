@@ -27,7 +27,6 @@ jobs:
       - name: Replace tokens
         run: |
           # プレースホルダーを環境変数（Secretsから注入）で置換する
-          sed -i "s|__SPREADSHEET_ID__|${{ secrets.SPREADSHEET_ID }}|g" index.html
           sed -i "s|__WEB_APP_URL__|${{ secrets.WEB_APP_URL }}|g" index.html
           sed -i "s|__SECRET_TOKEN__|${{ secrets.SECRET_TOKEN }}|g" index.html
           sed -i "s|__YOUR_API_KEY__|${{ secrets.YOUR_API_KEY }}|g" index.html
