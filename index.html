@@ -233,19 +233,7 @@
       const YOUR_API_KEY ="YOUR_API_KEY";
 
 
-      // 2. 新しい<script>要素を動的に生成する
-        const googleMapsScript = document.createElement('script');
-        
-        // 3. src属性に、APIキーを含んだURLを設定する
-        googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${YOUR_API_KEY}&callback=initMap&libraries=marker`;
-        
-        // 4. defer属性を設定して、非同期で読み込むようにする
-        googleMapsScript.defer = true;
-        googleMapsScript.async = true;
-        
-        // 5. 生成した<script>要素を、ドキュメントの<head>の末尾に追加する
-        document.head.appendChild(googleMapsScript);
-
+      
       
       let map;
       let initialCenterPosition = null;
@@ -876,10 +864,25 @@
             alert("データの読み込みに失敗しました。\n詳細: " + error.message);
             console.error(error);
       }
+
+      // 2. 新しい<script>要素を動的に生成する
+        const googleMapsScript = document.createElement('script');
+        
+        // 3. src属性に、APIキーを含んだURLを設定する
+        googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${YOUR_API_KEY}&callback=initMap&libraries=marker`;
+        
+        // 4. defer属性を設定して、非同期で読み込むようにする
+        googleMapsScript.defer = true;
+        googleMapsScript.async = true;
+        
+        // 5. 生成した<script>要素を、ドキュメントの<head>の末尾に追加する
+        document.body.appendChild(googleMapsScript);
+
       
     </script>
   </body>
 </html>
+
 
 
 
