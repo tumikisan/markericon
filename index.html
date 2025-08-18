@@ -228,9 +228,9 @@
       // ★ テンプレート構文でGASからIDを受け取る
       const params = new URLSearchParams(window.location.search);
     　const SPREADSHEET_ID = params.get('id'); // URLの'?id=...'の値を取得
-      const WEB_APP_URL = "__WEB_APP_URL__";
-    　const SECRET_TOKEN = "__SECRET_TOKEN__";
-      const YOUR_API_KEY = "__YOUR_API_KEY__";
+      const WEB_APP_URL = "__PLACEHOLDER_WEB_APP_URL__";
+      const SECRET_TOKEN = "__PLACEHOLDER_SECRET_TOKEN__";
+      const YOUR_API_KEY = "__PLACEHOLDER_YOUR_API_KEY__";
 
       let map;
       let initialCenterPosition = null;
@@ -879,6 +879,7 @@
     </script>
   </body>
 </html>
+
 
 
 
