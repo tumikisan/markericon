@@ -12,7 +12,7 @@ permissions: # ★ デプロイに必要な権限を追加
   id-token: write      
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     # ブランチに応じて環境を動的に設定
@@ -57,6 +57,15 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
+
+           # デプロイジョブ
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build # buildジョブの完了を待つ
+    steps:
 
       - name: Deploy to GitHub Pages
         id: deployment
