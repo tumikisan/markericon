@@ -26,15 +26,7 @@ jobs:
 
       - name: Replace tokens
         run: |
-          echo "--- Start Debugging File Paths ---"
-    
-          echo "Current directory:"
-          pwd  # ★ 現在のディレクトリのパスを表示する
           
-          echo "Files in current directory:"
-          ls -l # ★ 現在のディレクトリにあるファイルの一覧を詳細表示する
-          
-          echo "--- End Debugging ---"
           # プレースホルダーを環境変数（Secretsから注入）で置換する
           sed -i "s|__PLACEHOLDER_WEB_APP_UR__|${{ secrets.WEB_APP_URL }}|g" index.html
           sed -i "s|__PLACEHOLDER_SECRET_TOKEN__|${{ secrets.SECRET_TOKEN }}|g" index.html
