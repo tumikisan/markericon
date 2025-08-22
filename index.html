@@ -329,10 +329,11 @@
       }
 
       // [3] サーバーからデータを取得する部分
-      // ★★★ サーバー通信関数をgoogle.script.runからfetchに完全移行 ★★★
-      async function fetchDataFromServer(spreadsheetId) {
-            return await serverRequest('getMapData', { spreadsheetId: SPREADSHEET_ID });
-        }
+      // ★ fetchDataFromServerの呼び出し方を修正
+      async function fetchDataFromServer() {
+          // spreadsheetIdはserverRequestの中で渡されるので、引数は不要
+          return await serverRequest('getMapData');
+      }
       
       // [4] UIのイベントリスナーをまとめて設定する部分
       function setupEventListeners() {
@@ -754,10 +755,9 @@
 
       // ★★★ 新しいserverRequest関数 ★★★
       async function serverRequest(action, payload = {}) {
-         try {
-          // ★★★ プリフライトの代わりとなるGETリクエストを先に送る ★★★
-          await fetch(`${WEB_APP_URL}?action=preflight`, { mode: 'cors' });
-           
+        try {
+          // ★★★ プリフライト代わりのGETリクエストは削除 ★★★
+          
           const response = await fetch(WEB_APP_URL, {
               method: 'POST',
               mode: 'cors', 
@@ -765,6 +765,7 @@
               body: JSON.stringify({
                   action,
                   token: SECRET_TOKEN,
+                  spreadsheetId: SPREADSHEET_ID, // ★ spreadsheetIdもここで渡す
                   ...payload
               })
           });
@@ -777,7 +778,7 @@
             console.error('serverRequest Error:', error);
             throw error;
         }
-     }
+      }
 
       async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
         // 1. 楽観的UI更新：まず見た目を先に変える
@@ -807,64 +808,6 @@
         }
       }
 
-      // ★★★ サーバーとの通信を担う中央関数 ★★★
-
-      /**
-       * サーバーサイド（コード.gsのdoPost）にリクエストを送信する
-       * @param {string} action 実行したいサーバー関数の名前 (例: 'batchUpdateStatuses')
-       * @param {object} payload 送信するデータ (例: { updates: [...] })
-       * @returns {Promise<object>} サーバーからの応答データ
-       */
-      /*
-      async function serverRequest(action, payload = {}) {
-        // 1. WebアプリのURLとシークレットトークンを定義
-        //    URLはテンプレート構文でGASから取得するのが最も確実
-        //const WEB_APP_URL = '<?!= ScriptApp.getService().getUrl() ?>';
-        
-        try {
-          // 2. fetchリクエストを送信
-          const response = await fetch(WEB_APP_URL, {
-            method: 'POST',
-            mode: 'cors', // クロスオリジンリクエストを許可
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              action: action,
-              spreadsheetId: SPREADSHEET_ID,
-              token: SECRET_TOKEN,
-              ...payload // ★ 引数で受け取ったpayloadを展開して含める
-            })
-          });
-
-          // 3. 応答をJSONとして解析
-          const result = await response.json();
-
-          // 4. サーバー側でエラーが返ってきた場合の処理
-          if (!response.ok || !result.success) {
-            // result.messageがあればそれを使う、なければHTTPステータスを使う
-            const errorMessage = result.message || `HTTP error! status: ${response.status}`;
-            throw new Error(errorMessage);
-          }
-          
-          // 5. 成功したデータを返す
-          return result.data;
-
-        } catch (error) {
-          // 6. 通信エラーやJSON解析エラーが発生した場合の処理
-          console.error('serverRequest Error:', error);
-          // エラーを再スローして、呼び出し元でcatchできるようにする
-          throw error;
-        }
-      }
-
-
-      // --- 閉じるボタンのイベントリスナー ---
-      closeSheetButton.addEventListener('click', () => {
-          bottomSheet.classList.remove('is-visible');
-      });
-      */
-
       function onFailure(error) {
             alert("データの読み込みに失敗しました。\n詳細: " + error.message);
             console.error(error);
@@ -887,6 +830,7 @@
     </script>
   </body>
 </html>
+
 
 
 
