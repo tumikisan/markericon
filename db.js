@@ -2,7 +2,7 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 4;
+      const DB_VERSION = 2;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       let db;// この'db'変数は、このIIFEの中だけで有効になる
@@ -82,6 +82,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
