@@ -755,14 +755,25 @@
       // ★★★ この位置に配置するのが適切 ★★★
       async function syncLocalDataWithServer() {
             const queue = await dbManager.getQueue();
-            if (queue.length === 0) return;
+            if (!queue || queue.length === 0) return;
             const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
+
+            try {
+                await serverRequest('batchUpdateStatuses', { updates: updates });
+                await dbManager.clearQueue();
+                console.log("Sync successful!");
+            } catch (error) {
+                console.error("Sync failed:", error.message);
+            }
+
+        /*
             
             // ★ serverRequestを使って一括更新
             await serverRequest('batchUpdateStatuses', { spreadsheetId: SPREADSHEET_ID, updates: updates });
             
             await dbManager.clearQueue();
             console.log("Sync successful!");
+            */
         }
 
       // ★★★ 新しいserverRequest関数 ★★★
@@ -842,4 +853,5 @@
     </script>
   </body>
 </html>
+
 
