@@ -94,7 +94,7 @@
 
   // --- IndexedDBヘルパー関数ここまで ---
 
-const CACHE_NAME = 'map-app-cache-v3'; 
+const CACHE_NAME = 'map-app-cache-v4'; 
 
 // ★ オフラインで表示したいファイルのリスト
 const urlsToCache = [
@@ -143,7 +143,8 @@ const urlsToCache = [
     }
     
     event.respondWith(
-      caches.match(event.request).then(response => {
+      caches.match(event.request, { ignoreSearch: true })
+      .then(response => {
         if (response) {
           console.log('SW: Serving from cache:', event.request.url);
           return response; // キャッシュにあればそれを返す
@@ -231,6 +232,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
