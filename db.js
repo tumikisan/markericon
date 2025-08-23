@@ -32,44 +32,53 @@
         });
       }
 
+    // ★★★ Promiseでラップしたヘルパー関数 ★★★
+    function promisifyRequest(request) {
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     // ★ 設定を保存/取得する関数を追加
     async function setConfig(key, value) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
         const store = tx.objectStore(CONFIG_STORE_NAME); // ★ 正しいストア取得方法
         await store.put({ key, value });
-        return tx.done;
+        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
     }
     
     async function getConfig(key) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
         const store = tx.objectStore(CONFIG_STORE_NAME); 
-        const config = await store.get(key);
-        return config ? config.value : undefined;
+        const request = store.get(key);
+        const result = await promisifyRequest(request);
+        return result ? result.value : undefined;
     }
 
       async function putToQueue(update) {
       const db = await openDb();
       const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
       const store = tx.objectStore(UPDATE_STORE_NAME);
-      await store.put(update); 
-      return tx.done;
+      store.put(update);
+        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
     }
 
     async function getQueue() {
       const db = await openDb();
       const tx = db.transaction(UPDATE_STORE_NAME, 'readonly');
       const store = tx.objectStore(UPDATE_STORE_NAME);
-      return await store.getAll();
+      return await promisifyRequest(store.getAll());
     }
 
     async function clearQueue() {
       const db = await openDb();
       const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
       const store = tx.objectStore(UPDATE_STORE_NAME);
-      await store.clear();
-      return tx.done;
+      store.clear();
+        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
     }
 
     // ★ 2. return { ... } を追加
@@ -82,6 +91,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
