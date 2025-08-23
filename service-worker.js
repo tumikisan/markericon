@@ -94,7 +94,14 @@
 
   // --- IndexedDBヘルパー関数ここまで ---
 
-const CACHE_NAME = 'map-app-cache-v2';
+const CACHE_NAME = 'map-app-cache-v3'; 
+
+// ★ オフラインで表示したいファイルのリスト
+const urlsToCache = [
+  './',          // index.html (ルートURL)
+  './db.js'      // db.js
+  // CSSやロゴ画像など、他にキャッシュしたいファイルがあればここに追加
+];
 
 
   // インストール時にキャッシュを作成
@@ -104,7 +111,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       caches.open(CACHE_NAME).then(cache => {
         // GASのWebアプリでは、動的に生成されるため、
         // ルートURLだけをキャッシュするのが基本
-        return cache.add(new Request(self.registration.scope, { cache: 'reload' }));
+        return cache.addAll(urlsToCache);
       })
     );
     self.skipWaiting(); // ★ 新しいSWをすぐに有効化するおまじない
@@ -138,8 +145,10 @@ const CACHE_NAME = 'map-app-cache-v2';
     event.respondWith(
       caches.match(event.request).then(response => {
         if (response) {
+          console.log('SW: Serving from cache:', event.request.url);
           return response; // キャッシュにあればそれを返す
         }
+        console.log('SW: Fetching from network:', event.request.url);
         // キャッシュになければネットワークから取得
         return fetch(event.request);
       })
@@ -222,6 +231,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
