@@ -286,6 +286,18 @@
       // [2] アプリの起動シーケンスを管理
       async function initializeMapAndFeatures() {
           try {
+            if ('serviceWorker' in navigator && dbManager) {
+            // Service WorkerとdbManagerの両方が利用可能な場合のみ実行
+                Promise.all([
+                    dbManager.setConfig('webAppUrl', WEB_APP_URL),
+                    dbManager.setConfig('spreadsheetId', SPREADSHEET_ID),
+                    dbManager.setConfig('secretToken', SECRET_TOKEN)
+                ]).then(() => {
+                    console.log('Configuration saved to IndexedDB for Service Worker.');
+                }).catch(err => {
+                    console.error('Failed to save config to IndexedDB:', err);
+                });
+            }
               // 2-1. まず仮の中心地で地図を生成
               const temporaryCenter = { lat: 33.55850044, lng: 130.5252128 };
               map = new google.maps.Map(document.getElementById("map"), {
@@ -301,7 +313,7 @@
               });
               
               // 2-2. オンラインなら起動時同期を実行
-              // if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
+              if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
 
               // 2-3. サーバーからデータを取得
               // ★ fetchDataFromServerの呼び出し方が変わる
@@ -830,3 +842,4 @@
     </script>
   </body>
 </html>
+
