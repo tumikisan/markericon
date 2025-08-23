@@ -1,49 +1,10 @@
 
-  
-  //const CACHE_NAME = 'map-app-cache-v2';
-  //let WEB_APP_URL, SPREADSHEET_ID, SECRET_TOKEN;
-/*
-  self.addEventListener('message', event => {
-      if (event.data && event.data.type === 'INIT_CONFIG') {
-          WEB_APP_URL = event.data.webAppUrl;
-          SPREADSHEET_ID = event.data.spreadsheetId;
-          SECRET_TOKEN = event.data.secretToken;
-          console.log('Service Worker configured.');
-      }
-  });
-  
-  
-  // --- 2. IndexedDBヘルパー関数 (db.htmlからコピー) ---
-  const DB_NAME = 'map-app-db';
-  const DB_VERSION = 1;
-  const STORE_NAME = 'updateQueue';
-  let db; // このdb変数はService Workerスコープ内で使われる
-
-  function openDb() {
-    return new Promise((resolve, reject) => {
-      if (db) return resolve(db);
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = (event) => reject("IndexedDB error: " + request.error);
-      request.onsuccess = (event) => {
-        db = event.target.result;
-        resolve(db);
-      };
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'rowNumber' });
-        }
-      };
-    });
-  }
-*/
-
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 2;
+      const DB_VERSION = 3;
       const UPDATE_STORE_NAME = 'updateQueue';
-      const CONFIG_STORE_NAME = 'configStore'; // ★ 設定用ストア名
+      const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       let db;// この'db'変数は、このIIFEの中だけで有効になる
 
 
@@ -60,9 +21,13 @@
           };
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-                db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'key' });
-            } 
+            if (!tempDb.objectStoreNames.contains(UPDATE_STORE_NAME)) {
+            tempDb.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+            if (!tempDb.objectStoreNames.contains(CONFIG_STORE_NAME)) {
+              tempDb.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
+            }
+
           };
         });
       }
@@ -115,7 +80,6 @@
     };
 
   })(); // ★ 3. })(); を追加
-
 
   // --- IndexedDBヘルパー関数ここまで ---
 
@@ -241,6 +205,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
