@@ -21,11 +21,11 @@
           };
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!tempDb.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-            tempDb.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
+            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'id', autoIncrement: true });
             }
-            if (!tempDb.objectStoreNames.contains(CONFIG_STORE_NAME)) {
-              tempDb.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
+            if (!db.objectStoreNames.contains(CONFIG_STORE_NAME)) {
+              db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
             }
 
           };
@@ -80,6 +80,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
