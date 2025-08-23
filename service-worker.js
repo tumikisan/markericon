@@ -158,6 +158,12 @@ const CACHE_NAME = 'map-app-cache-v2';
   async function syncUpdates() {
     console.log('Service Worker: Starting sync process...');
     try {
+      // ★★★ dbManager. を付けて呼び出す ★★★
+        const queue = await dbManager.getQueue(); 
+        if (queue.length === 0) {
+            console.log('Service Worker: Queue is empty. Nothing to sync.');
+            return;
+        }
       // ★★★ 毎回DBから設定を読み込む ★★★
       const WEB_APP_URL = await dbManager.getConfig('webAppUrl');
       const SPREADSHEET_ID = await dbManager.getConfig('spreadsheetId');
@@ -203,7 +209,7 @@ const CACHE_NAME = 'map-app-cache-v2';
 
       if (result.success) {
         console.log('Service Worker: Sync successful! Clearing queue.');
-        await clearQueue();
+        await dbManager.clearQueue(); 
       } else {
         console.error('Service Worker: Sync failed on server.', result.message);
         // ここでリトライ処理などを実装することも可能
@@ -216,6 +222,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
