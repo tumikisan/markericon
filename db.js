@@ -2,9 +2,9 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 2;
+      const DB_VERSION = 3;
       const UPDATE_STORE_NAME = 'updateQueue';
-      const CONFIG_STORE_NAME = 'configStore'; // ★ 設定用ストア名
+      const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       let db;// この'db'変数は、このIIFEの中だけで有効になる
 
 
@@ -21,9 +21,13 @@
           };
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-                db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'key' });
-            } 
+            if (!tempDb.objectStoreNames.contains(UPDATE_STORE_NAME)) {
+            tempDb.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+            if (!tempDb.objectStoreNames.contains(CONFIG_STORE_NAME)) {
+              tempDb.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
+            }
+
           };
         });
       }
@@ -45,23 +49,23 @@
 
       async function putToQueue(update) {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       await store.put(update); 
       return tx.done;
     }
 
     async function getQueue() {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readonly');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       return await store.getAll();
     }
 
     async function clearQueue() {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       await store.clear();
       return tx.done;
     }
@@ -76,5 +80,6 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
