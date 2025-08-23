@@ -172,7 +172,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       if (!WEB_APP_URL || !SPREADSHEET_ID || !SECRET_TOKEN) {
           throw new Error("Configuration is not available in Service Worker.");
       }
-      const queue = await dbManager.getQueue();
+      //const queue = await dbManager.getQueue();
       if (queue.length === 0) {
         console.log('Service Worker: Queue is empty. Nothing to sync.');
         return;
@@ -222,6 +222,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
