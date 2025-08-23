@@ -1,5 +1,4 @@
 
- 
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
@@ -37,13 +36,15 @@
     async function setConfig(key, value) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
-        await tx.store.put({ key, value });
+        const store = tx.objectStore(CONFIG_STORE_NAME); // ★ 正しいストア取得方法
+        await store.put({ key, value });
         return tx.done;
     }
     
     async function getConfig(key) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
+        const store = tx.objectStore(CONFIG_STORE_NAME); 
         const config = await tx.store.get(key);
         return config ? config.value : undefined;
     }
@@ -206,6 +207,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
