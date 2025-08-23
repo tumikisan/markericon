@@ -11,8 +11,8 @@
           console.log('Service Worker configured.');
       }
   });
-  */
-
+  
+  
   // --- 2. IndexedDBヘルパー関数 (db.htmlからコピー) ---
   const DB_NAME = 'map-app-db';
   const DB_VERSION = 1;
@@ -36,28 +36,87 @@
       };
     });
   }
+*/
 
-  async function getQueue() {
-    const db = await openDb();
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    return new Promise((resolve, reject) => {
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
+  const dbManager = (() => {
 
-  async function clearQueue() {
-    const db = await openDb();
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    return new Promise((resolve, reject) => {
-      const request = store.clear();
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
+      const DB_NAME = 'map-app-db';
+      const DB_VERSION = 2;
+      const UPDATE_STORE_NAME = 'updateQueue';
+      const CONFIG_STORE_NAME = 'configStore'; // ★ 設定用ストア名
+      let db;// この'db'変数は、このIIFEの中だけで有効になる
+
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          if (db) return resolve(db);
+
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+          request.onerror = (event) => reject("IndexedDB error: " + request.error);
+          request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+          };
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
+                db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'key' });
+            } 
+          };
+        });
+      }
+
+    // ★ 設定を保存/取得する関数を追加
+    async function setConfig(key, value) {
+        const db = await openDb();
+        const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
+        await tx.store.put({ key, value });
+        return tx.done;
+    }
+    
+    async function getConfig(key) {
+        const db = await openDb();
+        const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
+        const config = await tx.store.get(key);
+        return config ? config.value : undefined;
+    }
+
+      async function putToQueue(update) {
+      const db = await openDb();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      await store.put(update); 
+      return tx.done;
+    }
+
+    async function getQueue() {
+      const db = await openDb();
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      return await store.getAll();
+    }
+
+    async function clearQueue() {
+      const db = await openDb();
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      await store.clear();
+      return tx.done;
+    }
+
+    // ★ 2. return { ... } を追加
+    return {
+      putToQueue: putToQueue,
+      getQueue: getQueue,
+      clearQueue: clearQueue,
+      setConfig,
+      getConfig
+    };
+
+  })(); // ★ 3. })(); を追加
+
+
   // --- IndexedDBヘルパー関数ここまで ---
 
 
@@ -122,7 +181,15 @@
   async function syncUpdates() {
     console.log('Service Worker: Starting sync process...');
     try {
-      const queue = await getQueue();
+      // ★★★ 毎回DBから設定を読み込む ★★★
+      const WEB_APP_URL = await dbManager.getConfig('webAppUrl');
+      const SPREADSHEET_ID = await dbManager.getConfig('spreadsheetId');
+      const SECRET_TOKEN = await dbManager.getConfig('secretToken');
+
+      if (!WEB_APP_URL || !SPREADSHEET_ID || !SECRET_TOKEN) {
+          throw new Error("Configuration is not available in Service Worker.");
+      }
+      const queue = await dbManager.getQueue();
       if (queue.length === 0) {
         console.log('Service Worker: Queue is empty. Nothing to sync.');
         return;
@@ -172,5 +239,6 @@
       throw error;
     }
   }
+
 
 
