@@ -2,8 +2,9 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 1;
-      const STORE_NAME = 'updateQueue';
+      const DB_VERSION = 2;
+      const UPDATE_STORE_NAME = 'updateQueue';
+      const CONFIG_STORE_NAME = 'configStore'; // ★ 設定用ストア名
       let db;// この'db'変数は、このIIFEの中だけで有効になる
 
 
@@ -20,12 +21,27 @@
           };
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: 'rowNumber' });
+            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
+                db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'key' });
             } 
           };
         });
       }
+
+    // ★ 設定を保存/取得する関数を追加
+    async function setConfig(key, value) {
+        const db = await openDb();
+        const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
+        await tx.store.put({ key, value });
+        return tx.done;
+    }
+    
+    async function getConfig(key) {
+        const db = await openDb();
+        const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
+        const config = await tx.store.get(key);
+        return config ? config.value : undefined;
+    }
 
       async function putToQueue(update) {
       const db = await openDb();
@@ -54,8 +70,11 @@
     return {
       putToQueue: putToQueue,
       getQueue: getQueue,
-      clearQueue: clearQueue
+      clearQueue: clearQueue,
+      setConfig,
+      getConfig
     };
 
   })(); // ★ 3. })(); を追加
+
 
