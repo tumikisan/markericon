@@ -2,7 +2,7 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 3;
+      const DB_VERSION = 4;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       let db;// この'db'変数は、このIIFEの中だけで有効になる
@@ -22,7 +22,7 @@
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'rowNumber' });
             }
             if (!db.objectStoreNames.contains(CONFIG_STORE_NAME)) {
               db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
@@ -45,7 +45,7 @@
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
         const store = tx.objectStore(CONFIG_STORE_NAME); 
-        const config = await tx.store.get(key);
+        const config = await store.get(key);
         return config ? config.value : undefined;
     }
 
@@ -207,6 +207,7 @@ const CACHE_NAME = 'map-app-cache-v2';
       throw error;
     }
   }
+
 
 
 
