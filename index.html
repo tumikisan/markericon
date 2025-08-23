@@ -755,6 +755,18 @@
       // ★★★ この位置に配置するのが適切 ★★★
       async function syncLocalDataWithServer() {
             const queue = await dbManager.getQueue();
+         // ★★★ デバッグコードを追加 ★★★
+          console.log("--- syncLocalDataWithServer ---");
+          console.log("getQueueから受け取ったqueue:", queue);
+          console.log("queueは配列ですか？:", Array.isArray(queue));
+          // ★★★ デバッグコードここまで ★★★
+
+          if (!queue || !Array.isArray(queue) || queue.length === 0) {
+              // !Array.isArray(queue) を追加して、配列でない場合はここで弾く
+              console.log("同期するデータは配列ではない、または空です。");
+              return;
+          }
+        
             if (!queue || queue.length === 0) return;
             const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
 
@@ -853,5 +865,6 @@
     </script>
   </body>
 </html>
+
 
 
