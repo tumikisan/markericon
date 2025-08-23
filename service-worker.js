@@ -1,8 +1,8 @@
 
   
-  const CACHE_NAME = 'map-app-cache-v2';
-  let WEB_APP_URL, SPREADSHEET_ID, SECRET_TOKEN;
-
+  //const CACHE_NAME = 'map-app-cache-v2';
+  //let WEB_APP_URL, SPREADSHEET_ID, SECRET_TOKEN;
+/*
   self.addEventListener('message', event => {
       if (event.data && event.data.type === 'INIT_CONFIG') {
           WEB_APP_URL = event.data.webAppUrl;
@@ -11,6 +11,7 @@
           console.log('Service Worker configured.');
       }
   });
+  */
 
   // --- 2. IndexedDBヘルパー関数 (db.htmlからコピー) ---
   const DB_NAME = 'map-app-db';
@@ -171,4 +172,5 @@
       throw error;
     }
   }
+
 
