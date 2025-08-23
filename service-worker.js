@@ -84,23 +84,23 @@
 
       async function putToQueue(update) {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       await store.put(update); 
       return tx.done;
     }
 
     async function getQueue() {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readonly');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       return await store.getAll();
     }
 
     async function clearQueue() {
       const db = await openDb();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(UPDATE_STORE_NAME);
       await store.clear();
       return tx.done;
     }
@@ -118,6 +118,8 @@
 
 
   // --- IndexedDBヘルパー関数ここまで ---
+
+const CACHE_NAME = 'map-app-cache-v2';
 
 
   // インストール時にキャッシュを作成
@@ -239,6 +241,7 @@
       throw error;
     }
   }
+
 
 
 
