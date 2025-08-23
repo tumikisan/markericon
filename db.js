@@ -36,13 +36,15 @@
     async function setConfig(key, value) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
-        await tx.store.put({ key, value });
+        const store = tx.objectStore(CONFIG_STORE_NAME); // ★ 正しいストア取得方法
+        await store.put({ key, value });
         return tx.done;
     }
     
     async function getConfig(key) {
         const db = await openDb();
         const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
+        const store = tx.objectStore(CONFIG_STORE_NAME); 
         const config = await tx.store.get(key);
         return config ? config.value : undefined;
     }
@@ -80,6 +82,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
