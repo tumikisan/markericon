@@ -47,7 +47,8 @@
     async function getCachedFeatures() {
         const db = await openDb();
         const tx = db.transaction(FEATURES_STORE_NAME, 'readonly');
-        const result = await tx.store.get('main');
+      const store = tx.objectStore(FEATURES_STORE_NAME); // ★ 正しいストア取得
+        const result = await promisifyRequest(store.get('main'));
         return result ? result.data : null;
     }
 
@@ -110,6 +111,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
