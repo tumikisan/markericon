@@ -2,7 +2,7 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 4;
+      const DB_VERSION = 5;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       const FEATURES_STORE_NAME = 'featuresStore'
@@ -114,6 +114,7 @@
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
