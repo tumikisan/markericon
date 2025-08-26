@@ -40,9 +40,11 @@
     async function cacheFeatures(features) {
         const db = await openDb();
         const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(FEATURES_STORE_NAME);
         // 常に最新のデータで上書きするため、キーは固定値 'main' などにする
-        await tx.store.put({ id: 'main', data: features });
-        return tx.done;
+        await promisifyRequest(store.put({ id: 'main', data: features }));
+        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
+      
     }
     async function getCachedFeatures() {
         const db = await openDb();
@@ -107,10 +109,12 @@
       getQueue: getQueue,
       clearQueue: clearQueue,
       setConfig,
-      getConfig
+      getConfig,
+      cacheFeatures, getCachedFeatures
     };
 
   })(); // ★ 3. })(); を追加
+
 
 
 
