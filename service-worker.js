@@ -161,29 +161,44 @@ const urlsToCache = [
 
   // fetchイベントでリクエストを傍受（キャッシュファースト戦略）
   self.addEventListener('fetch', event => {
-     const requestUrl = new URL(event.request.url);
-  if (event.request.method === 'POST') return;
+     const { request } = event;
+  const url = new URL(request.url);
 
-  // 地図タイルリクエストの処理
-  if (requestUrl.hostname.includes('googleapis.com') || requestUrl.hostname.includes('googleusercontent.com')) {
+  if (request.method !== 'GET') return;
+
+  // Google Maps APIとタイルのリクエスト
+  if (url.hostname.includes('googleapis.com') || url.hostname.includes('googleusercontent.com')) {
     event.respondWith(
       caches.open(MAPS_CACHE_NAME).then(cache => {
-        return cache.match(event.request).then(response => {
-          const fetchPromise = fetch(event.request).then(networkResponse => {
-            cache.put(event.request, networkResponse.clone());
+        return cache.match(request).then(cachedResponse => {
+          // ★ ネットワークリクエストを非同期で実行
+          const fetchedResponsePromise = fetch(request).then(networkResponse => {
+            cache.put(request, networkResponse.clone());
             return networkResponse;
           });
-          return response || fetchPromise;
-        });
+          
+          // ★ キャッシュにあればそれを返し、なければネットワークの結果を待つ
+          // これにより、オンライン時は最新、オフライン時はキャッシュが表示される
+          return cachedResponse || fetchedResponsePromise;
+        }).catch(() => {
+            // ★★★ オフラインでキャッシュもない場合のフォールバック ★★★
+            // 例えば、地図タイルがない場合に表示する代替の透明な画像を返すなど
+            if (url.pathname.includes('/maps/vt')) { // もしタイルリクエストなら
+                return new Response(
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"></svg>',
+                    { headers: { 'Content-Type': 'image/svg+xml' } }
+                );
+            }
+        })
       })
     );
     return;
   }
 
-  // アプシェルリクエストの処理
+  // アプシェルのリクエスト (Cache First)
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(response => {
-      return response || fetch(event.request);
+    caches.match(request, { ignoreSearch: true }).then(cachedResponse => {
+      return cachedResponse || fetch(request);
     })
   );
     /*
@@ -307,6 +322,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
