@@ -149,7 +149,7 @@ const urlsToCache = [
       
       // ★ 地図タイルには「Stale-While-Revalidate」戦略が適している
       event.respondWith(
-        caches.open(MAPS_CACHE_NAME).then(cache => {
+        caches.open(MAPS_CACHE_NAME).then(cache => 
           return cache.match(event.request).then(response => {
             // 1. まずキャッシュから返す (Stale)
             const fetchPromise = fetch(event.request).then(networkResponse => {
@@ -159,10 +159,11 @@ const urlsToCache = [
             });
             // キャッシュにあればそれを返し、なければネットワークの結果を待つ
             return response || fetchPromise;
-          });
-        })
+          })
+        )
       );
       return; // 地図タイルの処理はここで終了
+    }
 
       event.respondWith(
       caches.match(event.request, { ignoreSearch: true })
@@ -254,6 +255,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
