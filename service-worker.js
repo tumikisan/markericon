@@ -95,6 +95,7 @@
   // --- IndexedDBヘルパー関数ここまで ---
 
 const CACHE_NAME = 'map-app-cache-v4'; 
+const MAPS_CACHE_NAME = 'maps-tiles-cache-v1';
 
 // ★ オフラインで表示したいファイルのリスト
 const urlsToCache = [
@@ -137,12 +138,33 @@ const urlsToCache = [
 
   // fetchイベントでリクエストを傍受（キャッシュファースト戦略）
   self.addEventListener('fetch', event => {
+    const requestUrl = new URL(event.request.url);
     // doPostへのリクエストはキャッシュしない（常にネットワークへ）
     if (event.request.method === 'POST') {
       return;
     }
-    
-    event.respondWith(
+
+    // ★ 地図タイルのリクエストかどうかをURLで判定
+    if (requestUrl.hostname === 'maps.googleapis.com' || requestUrl.hostname.endsWith('.googleusercontent.com')) {
+      
+      // ★ 地図タイルには「Stale-While-Revalidate」戦略が適している
+      event.respondWith(
+        caches.open(MAPS_CACHE_NAME).then(cache => {
+          return cache.match(event.request).then(response => {
+            // 1. まずキャッシュから返す (Stale)
+            const fetchPromise = fetch(event.request).then(networkResponse => {
+              // 2. 裏側でネットワークから新しいものを取得し、キャッシュを更新 (Revalidate)
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            });
+            // キャッシュにあればそれを返し、なければネットワークの結果を待つ
+            return response || fetchPromise;
+          });
+        })
+      );
+      return; // 地図タイルの処理はここで終了
+
+      event.respondWith(
       caches.match(event.request, { ignoreSearch: true })
       .then(response => {
         if (response) {
@@ -182,7 +204,7 @@ const urlsToCache = [
       if (!WEB_APP_URL || !SPREADSHEET_ID || !SECRET_TOKEN) {
           throw new Error("Configuration is not available in Service Worker.");
       }
-      //const queue = await dbManager.getQueue();
+      const queue = await dbManager.getQueue();
       if (queue.length === 0) {
         console.log('Service Worker: Queue is empty. Nothing to sync.');
         return;
@@ -232,6 +254,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
