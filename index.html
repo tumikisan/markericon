@@ -312,8 +312,53 @@
                   disableDoubleClickZoom: true
               });
 
+            // --- 2. データ取得フロー ---
+        let data = null;
+
+        if (navigator.onLine) {
+            try {
+                // オンラインならサーバーから取得
+                console.log("Online: Fetching data from server...");
+                data = await fetchDataFromServer();
+                if (data.error) throw new Error(data.error);
+
+                // 取得したデータをキャッシュ
+                await dbManager.cacheFeatures(data.features);
+                console.log("Data cached to IndexedDB.");
+                
+                // 溜まっていたキューを同期
+                await syncLocalDataWithServer();
+
+            } catch (serverError) {
+                // サーバーがエラーでも、キャッシュがあればフォールバック
+                console.error("Server fetch failed, falling back to cache:", serverError.message);
+                data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
+            }
+        } else {
+            // オフラインならキャッシュから読み込む
+            console.log("Offline: Loading data from cache...");
+            data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
+        }
+
+        // --- 3. 描画処理 ---
+        if (!data || !data.features) {
+            onFailure({ message: "表示できるデータがありません。" });
+            return;
+        }
+
+        initialCenterPosition = data.initialCenter || temporaryCenter;
+        map.setCenter(initialCenterPosition);
+        map.setZoom(20);
+        drawFeatures(data.features);
+        setupEventListeners();
+        
+    } catch (error) {
+        onFailure(error);
+    }
+
+            /*
+
             let data = null;
-            let features = null;
 
             await dbManager.cacheFeatures(features); // ★ cacheFeaturesをdbManagerに追加
                 console.log("Data cached to IndexedDB.");
@@ -363,6 +408,7 @@
           } catch (error) {
               onFailure(error);
           }
+          */
       }
 
       // [3] サーバーからデータを取得する部分
@@ -890,6 +936,7 @@
     </script>
   </body>
 </html>
+
 
 
 
