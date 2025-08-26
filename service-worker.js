@@ -158,6 +158,32 @@ const urlsToCache = [
 
   // fetchイベントでリクエストを傍受（キャッシュファースト戦略）
   self.addEventListener('fetch', event => {
+     const requestUrl = new URL(event.request.url);
+  if (event.request.method === 'POST') return;
+
+  // 地図タイルリクエストの処理
+  if (requestUrl.hostname.includes('googleapis.com') || requestUrl.hostname.includes('googleusercontent.com')) {
+    event.respondWith(
+      caches.open(MAPS_CACHE_NAME).then(cache => {
+        return cache.match(event.request).then(response => {
+          const fetchPromise = fetch(event.request).then(networkResponse => {
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+          });
+          return response || fetchPromise;
+        });
+      })
+    );
+    return;
+  }
+
+  // アプシェルリクエストの処理
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true }).then(response => {
+      return response || fetch(event.request);
+    })
+  );
+    /*
     const requestUrl = new URL(event.request.url);
     // doPostへのリクエストはキャッシュしない（常にネットワークへ）
     if (event.request.method === 'POST') {
@@ -197,7 +223,9 @@ const urlsToCache = [
         return fetch(event.request);
       })
     );
+    */
   });
+  
 
   // バックグラウンド同期イベント
   self.addEventListener('sync', event => {
@@ -206,6 +234,7 @@ const urlsToCache = [
       event.waitUntil(syncUpdates());
     }
   });
+  
 
   // ★★★ 同期処理の実体 ★★★
   async function syncUpdates() {
@@ -225,7 +254,7 @@ const urlsToCache = [
       if (!WEB_APP_URL || !SPREADSHEET_ID || !SECRET_TOKEN) {
           throw new Error("Configuration is not available in Service Worker.");
       }
-      const queue = await dbManager.getQueue();
+      //const queue = await dbManager.getQueue();
       if (queue.length === 0) {
         console.log('Service Worker: Queue is empty. Nothing to sync.');
         return;
@@ -275,6 +304,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
