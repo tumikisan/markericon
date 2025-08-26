@@ -311,9 +311,32 @@
                   gestureHandling: 'greedy',
                   disableDoubleClickZoom: true
               });
+
+            let data = null;
+            let features = null;
+
+            await dbManager.cacheFeatures(features); // ★ cacheFeaturesをdbManagerに追加
+                console.log("Data cached to IndexedDB.");
               
               // 2-2. オンラインなら起動時同期を実行
               if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
+              if (data.error) throw new Error(data.error);
+
+            } catch (serverError) {
+                console.error("Server fetch failed, falling back to cache:", serverError.message);
+                // サーバーがエラーでも、キャッシュがあればそれを使う
+                features = await dbManager.getCachedFeatures();
+            }
+            } else {
+                // オフラインならキャッシュから読み込む
+                console.log("Offline: Loading data from cache...");
+                features = await dbManager.getCachedFeatures();
+            }
+    
+            if (!features) {
+                onFailure({ message: "オフラインで、キャッシュされたデータもありません。" });
+                return;
+            }
 
               // 2-3. サーバーからデータを取得
               // ★ fetchDataFromServerの呼び出し方が変わる
@@ -325,8 +348,10 @@
               }
 
               // 2-4. 取得したデータで地図の中心とズームを再設定
-              initialCenterPosition = data.initialCenter || temporaryCenter;
-              map.setCenter(initialCenterPosition);
+              initialCenterPosition = data ? data.initialCenter : null; || temporaryCenter;
+              if (initialCenterPosition) {
+                  map.setCenter(initialCenterPosition);
+              }
               map.setZoom(20);
 
               // 2-5. マーカーやポリゴンを描画
@@ -338,42 +363,6 @@
           } catch (error) {
               onFailure(error);
           }
-
-        let features = null;
-        try {
-            // ★ オンラインならサーバーから取得し、キャッシュする
-            console.log("オンラインなのでサーバーからデータを取得します...");
-            const data = await fetchDataFromServer();
-            if (data.error) throw new Error(data.error);
-            
-            initialCenterPosition = data.initialCenter || temporaryCenter;
-            features = data.features;
-    
-            // ★ 取得したデータをIndexedDBにキャッシュ
-            await dbManager.cacheFeatures(features);
-            console.log("データをIndexedDBにキャッシュしました。");
-    
-        } catch (error) {
-            console.error("サーバーからのデータ取得に失敗:", error.message);
-            // ★ オフラインまたはエラー時は、キャッシュから読み込みを試みる
-            console.log("キャッシュからデータの読み込みを試みます...");
-            features = await dbManager.getCachedFeatures();
-            
-            if (!features) {
-                onFailure({ message: "オフラインで、キャッシュされたデータもありません。" });
-                return;
-            }
-            
-            // キャッシュデータには中心座標がないので、計算するか固定値を使う
-            initialCenterPosition = temporaryCenter;
-        }
-        
-        // ★ 取得できたデータで地図を更新・描画
-        map.setCenter(initialCenterPosition);
-        map.setZoom(20);
-        drawFeatures(features);
-        setupEventListeners();
-        
       }
 
       // [3] サーバーからデータを取得する部分
@@ -901,6 +890,7 @@
     </script>
   </body>
 </html>
+
 
 
 
