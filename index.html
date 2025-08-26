@@ -313,7 +313,7 @@
               });
 
             // --- 2. データ取得フロー ---
-        let data = null;
+        let data;
 
         if (navigator.onLine) {
             try {
@@ -334,23 +334,23 @@
                 console.error("Server fetch failed, falling back to cache:", serverError.message);
                 data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
             }
-        } else {
-            // オフラインならキャッシュから読み込む
-            console.log("Offline: Loading data from cache...");
-            data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
-        }
+          } else {
+              // オフラインならキャッシュから読み込む
+              console.log("Offline: Loading data from cache...");
+              data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
+          }
 
-        // --- 3. 描画処理 ---
-        if (!data || !data.features) {
-            onFailure({ message: "表示できるデータがありません。" });
-            return;
-        }
-
-        initialCenterPosition = data.initialCenter || temporaryCenter;
-        map.setCenter(initialCenterPosition);
-        map.setZoom(20);
-        drawFeatures(data.features);
-        setupEventListeners();
+          // --- 3. 描画処理 ---
+          if (!data || !data.features) {
+              onFailure({ message: "表示できるデータがありません。" });
+              return;
+          }
+  
+          initialCenterPosition = data.initialCenter || temporaryCenter;
+          map.setCenter(initialCenterPosition);
+          map.setZoom(20);
+          drawFeatures(data.features);
+          setupEventListeners();
         
     } catch (error) {
         onFailure(error);
@@ -936,6 +936,7 @@
     </script>
   </body>
 </html>
+
 
 
 
