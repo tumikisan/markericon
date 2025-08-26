@@ -2,9 +2,10 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 2;
+      const DB_VERSION = 4;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
+      const FEATURES_STORE_NAME = 'featuresStore'
       let db;// この'db'変数は、このIIFEの中だけで有効になる
 
 
@@ -27,10 +28,29 @@
             if (!db.objectStoreNames.contains(CONFIG_STORE_NAME)) {
               db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
             }
+            if (!db.objectStoreNames.contains(FEATURES_STORE_NAME)) {
+                db.createObjectStore(FEATURES_STORE_NAME, { keyPath: 'id' });
+            }
 
           };
         });
       }
+
+    // ★ データを保存・取得する関数を追加
+    async function cacheFeatures(features) {
+        const db = await openDb();
+        const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
+        // 常に最新のデータで上書きするため、キーは固定値 'main' などにする
+        await tx.store.put({ id: 'main', data: features });
+        return tx.done;
+    }
+    async function getCachedFeatures() {
+        const db = await openDb();
+        const tx = db.transaction(FEATURES_STORE_NAME, 'readonly');
+      const store = tx.objectStore(FEATURES_STORE_NAME); // ★ 正しいストア取得
+        const result = await promisifyRequest(store.get('main'));
+        return result ? result.data : null;
+    }
 
     // ★★★ Promiseでラップしたヘルパー関数 ★★★
     function promisifyRequest(request) {
@@ -255,6 +275,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
