@@ -298,6 +298,7 @@
                     console.error('Failed to save config to IndexedDB:', err);
                 });
             }
+            /*
               // 2-1. まず仮の中心地で地図を生成
               const temporaryCenter = { lat: 33.55850044, lng: 130.5252128 };
               map = new google.maps.Map(document.getElementById("map"), {
@@ -311,23 +312,107 @@
                   gestureHandling: 'greedy',
                   disableDoubleClickZoom: true
               });
+             */
+        
+              
 
             // --- 2. データ取得フロー ---
         let data;
+        let features;
+        let centerPosition;
 
         if (navigator.onLine) {
             try {
+              /*
                 // オンラインならサーバーから取得
                 console.log("Online: Fetching data from server...");
                 data = await fetchDataFromServer();
                 if (data.error) throw new Error(data.error);
+                */
+              // オンラインならサーバーから取得
+                console.log("Online: Fetching data from server...");
+                data = await fetchDataFromServer();
+                if (data.error) throw new Error(data.error.message);
+
+               // ★ サーバーから取得した中心座標を最優先で使う
+                centerPosition = data.initialCenter;
+                features = data.features;
+
+              // 取得したデータをキャッシュ
+                await dbManager.cacheFeatures({ features: features, initialCenter: centerPosition });
+                console.log("Data cached to IndexedDB.");
+
+
+              /*
 
                 // 取得したデータをキャッシュ
                 await dbManager.cacheFeatures(data.features);
                 console.log("Data cached to IndexedDB.");
+                */
+        
                 
                 // 溜まっていたキューを同期
                 await syncLocalDataWithServer();
+
+              } catch (serverError) {
+                console.error("Server fetch failed, falling back to cache:", serverError.message);
+                // サーバーがエラーでも、キャッシュがあればフォールバック
+                const cachedData = await dbManager.getCachedFeatures();
+                if (cachedData) {
+                    features = cachedData.features;
+                    centerPosition = cachedData.initialCenter; // キャッシュからも中心地を読み込む
+                }
+            }
+        } else {
+            // オフラインならキャッシュから読み込む
+            console.log("Offline: Loading data from cache...");
+            const cachedData = await dbManager.getCachedFeatures();
+            if (cachedData) {
+                features = cachedData.features;
+                centerPosition = cachedData.initialCenter;
+            }
+        }
+
+        // --- 3. 中心座標が取得できたか最終チェック ---
+        if (!centerPosition) {
+            // オンラインでもオフラインでも中心地が取得できなかった場合
+            document.getElementById('map').innerHTML = 
+                '<div style="padding: 2em; text-align: center;"><h2>区域地図データが読み込めませんでした</h2><p>ネットワーク接続を確認して、ページを再読み込みしてください。</p></div>';
+            // これ以降の処理は行わない
+            return; 
+        }
+
+        // --- 4. 地図の生成と描画 ---
+        // ★ 取得できた中心座標を使って地図を生成
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 20, // 広域
+                  center: temporaryCenter,
+                  mapId: "94c5c628b879c42c946ab547",
+                  streetViewControl: false,
+                  fullscreenControl: false,
+                  zoomControl: false,
+                  scaleControl: false,
+                  gestureHandling: 'greedy',
+                  disableDoubleClickZoom: true
+              });
+
+             // グローバル変数に初期位置を保存
+        initialCenterPosition = centerPosition;
+
+        if (!features) {
+            // 中心座標はあるがマーカーデータがない場合（あり得る）
+            console.warn("中心座標は読み込めましたが、マーカーデータはありませんでした。");
+        } else {
+            drawFeatures(features);
+        }
+
+        setupEventListeners();
+        
+    } catch (error) {
+        onFailure(error);
+    }
+
+              /*
 
             } catch (serverError) {
                 // サーバーがエラーでも、キャッシュがあればフォールバック
@@ -355,6 +440,8 @@
     } catch (error) {
         onFailure(error);
     }
+    */
+              
 
             /*
 
@@ -936,6 +1023,7 @@
     </script>
   </body>
 </html>
+
 
 
 
