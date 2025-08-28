@@ -298,24 +298,7 @@
                     console.error('Failed to save config to IndexedDB:', err);
                 });
             }
-            /*
-              // 2-1. まず仮の中心地で地図を生成
-              const temporaryCenter = { lat: 33.55850044, lng: 130.5252128 };
-              map = new google.maps.Map(document.getElementById("map"), {
-                  zoom: 20, // 広域
-                  center: temporaryCenter,
-                  mapId: "94c5c628b879c42c946ab547",
-                  streetViewControl: false,
-                  fullscreenControl: false,
-                  zoomControl: false,
-                  scaleControl: false,
-                  gestureHandling: 'greedy',
-                  disableDoubleClickZoom: true
-              });
-             */
-        
-              
-
+           
             // --- 2. データ取得フロー ---
         let data;
         let features;
@@ -323,12 +306,7 @@
 
         if (navigator.onLine) {
             try {
-              /*
-                // オンラインならサーバーから取得
-                console.log("Online: Fetching data from server...");
-                data = await fetchDataFromServer();
-                if (data.error) throw new Error(data.error);
-                */
+             
               // オンラインならサーバーから取得
                 console.log("Online: Fetching data from server...");
                 data = await fetchDataFromServer();
@@ -342,15 +320,6 @@
                 await dbManager.cacheFeatures({ features: features, initialCenter: centerPosition });
                 console.log("Data cached to IndexedDB.");
 
-
-              /*
-
-                // 取得したデータをキャッシュ
-                await dbManager.cacheFeatures(data.features);
-                console.log("Data cached to IndexedDB.");
-                */
-        
-                
                 // 溜まっていたキューを同期
                 await syncLocalDataWithServer();
 
@@ -411,92 +380,7 @@
     } catch (error) {
         onFailure(error);
     }
-
-              /*
-
-            } catch (serverError) {
-                // サーバーがエラーでも、キャッシュがあればフォールバック
-                console.error("Server fetch failed, falling back to cache:", serverError.message);
-                data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
-            }
-          } else {
-              // オフラインならキャッシュから読み込む
-              console.log("Offline: Loading data from cache...");
-              data = { features: await dbManager.getCachedFeatures(), initialCenter: null };
-          }
-
-          // --- 3. 描画処理 ---
-          if (!data || !data.features) {
-              onFailure({ message: "表示できるデータがありません。" });
-              return;
-          }
-  
-          initialCenterPosition = data.initialCenter || temporaryCenter;
-          map.setCenter(initialCenterPosition);
-          map.setZoom(20);
-          drawFeatures(data.features);
-          setupEventListeners();
-        
-    } catch (error) {
-        onFailure(error);
-    }
-    */
-              
-
-            /*
-
-            let data = null;
-
-            await dbManager.cacheFeatures(features); // ★ cacheFeaturesをdbManagerに追加
-                console.log("Data cached to IndexedDB.");
-              
-              // 2-2. オンラインなら起動時同期を実行
-              if (navigator.onLine) await syncLocalDataWithServer(); // オフライン対応時に有効化
-              if (data.error) throw new Error(data.error);
-
-            } catch (serverError) {
-                console.error("Server fetch failed, falling back to cache:", serverError.message);
-                // サーバーがエラーでも、キャッシュがあればそれを使う
-                features = await dbManager.getCachedFeatures();
-            }
-            } else {
-                // オフラインならキャッシュから読み込む
-                console.log("Offline: Loading data from cache...");
-                features = await dbManager.getCachedFeatures();
-            }
-    
-            if (!features) {
-                onFailure({ message: "オフラインで、キャッシュされたデータもありません。" });
-                return;
-            }
-
-              // 2-3. サーバーからデータを取得
-              // ★ fetchDataFromServerの呼び出し方が変わる
-                const data = await fetchDataFromServer(SPREADSHEET_ID);
-              
-              if (data.error) {
-                  onFailure({ message: data.error });
-                  return;
-              }
-
-              // 2-4. 取得したデータで地図の中心とズームを再設定
-              initialCenterPosition = data ? data.initialCenter : null; || temporaryCenter;
-              if (initialCenterPosition) {
-                  map.setCenter(initialCenterPosition);
-              }
-              map.setZoom(20);
-
-              // 2-5. マーカーやポリゴンを描画
-              drawFeatures(data.features);
-
-              // 2-6. UIのイベントリスナーを設定
-              setupEventListeners();
-
-          } catch (error) {
-              onFailure(error);
-          }
-          */
-      }
+   }
 
       // [3] サーバーからデータを取得する部分
       // ★ fetchDataFromServerの呼び出し方を修正
@@ -1023,12 +907,5 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
-
 
 
