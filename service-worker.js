@@ -2,7 +2,7 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 5;
+      const DB_VERSION = 6;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       const FEATURES_STORE_NAME = 'featuresStore'
@@ -37,13 +37,14 @@
       }
 
     // ★ データを保存・取得する関数を追加
-    async function cacheFeatures(features) {
+    async function cacheFeatures(dataToCache) {
         const db = await openDb();
         const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
         const store = tx.objectStore(FEATURES_STORE_NAME);
         // 常に最新のデータで上書きするため、キーは固定値 'main' などにする
-        await promisifyRequest(store.put({ id: 'main', data: features }));
-        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
+        await promisifyRequest(store.put({ id: 'main', data: dataToCache }));
+        return tx.done;
+        //return new Promise(resolve => { tx.oncomplete = () => resolve(); });
       
     }
     async function getCachedFeatures() {
@@ -322,6 +323,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
