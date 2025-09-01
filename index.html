@@ -172,7 +172,7 @@
         width: 100%; 
         height: 100%;
         border-radius: 50%;
-        color: white;
+        color: transparent;
         font-weight: bold;
         display: flex;
         justify-content: center;
@@ -180,6 +180,7 @@
         text-shadow: 2px 3px 5px rgba(0,0,0,0.5); /* 影を共通化 */
         display: none;
       }
+      /*transparent透明*/
 
       /* ★ 個別のスタイル */
       /* ベースとなる文字のスタイル */
@@ -565,8 +566,8 @@
         //マーカーの使用文字
         markerDiv.innerHTML = `
           <div class="overlay marker-text">${textContent.substring(0, 1)}</div>
-          <div class="overlay checkmark-overlay">ー</div>
-          <div class="overlay p-overlay">〇</div>
+          <div class="overlay checkmark-overlay">✓</div>
+          <div class="overlay p-overlay">P</div>
         `;
         markerDiv.style.backgroundColor = backgroundColor;
         
@@ -918,6 +919,7 @@
     </script>
   </body>
 </html>
+
 
 
 
