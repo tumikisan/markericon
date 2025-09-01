@@ -28,6 +28,14 @@
       }
       .map-button:hover { background-color: #f4f4f4; }//青っぽい色
 
+      .top-button {
+          top: 10px;
+      }
+      .middle-button {
+          /* calc()を使って計算 */
+          top: 82px; /* 上記の計算結果 */
+      }
+
       /* ★ 各ボタンの位置を設定 */
       #reset-center-button {
             top: 10px;  /* 一番上 */
@@ -192,6 +200,11 @@
       .checkmark-overlay, .p-overlay {
           color: transparent;
           font-size: 72px;
+          text-shadow: 
+            2px 2px 0 rgba(0,0,0,0.5),
+           -2px 2px 0 rgba(0,0,0,0.5),
+           -2px -2px 0 rgba(0,0,0,0.5),
+            2px -2px 0 rgba(0,0,0,0.5);
       }
 
       .apartment-marker, .autolock-marker {
@@ -215,9 +228,9 @@
     </style>
   </head>
   <body>
-    <button id="start-tracking-button" class="map-button">現在地表示</button>
-    <button id="stop-tracking-button" class="map-button">現在地非表示</button>
-    <button id="reset-center-button" class="map-button">初期位置に戻る</button>
+    <button id="reset-center-button" class="map-button top-button">初期位置に戻る</button>
+    <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
+    <button id="stop-tracking-button" class="map-button middle-button" style="display: none;">現在地非表示</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
 
@@ -920,6 +933,7 @@
     </script>
   </body>
 </html>
+
 
 
 
