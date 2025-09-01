@@ -29,9 +29,19 @@
       .map-button:hover { background-color: #f4f4f4; }//青っぽい色
 
       /* ★ 各ボタンの位置を設定 */
-      #start-tracking-button { top: 100px; right: 10px; }
-      #stop-tracking-button { top: 100px; right: 10px; display: none; } /* 初期状態は非表示 */
-      #reset-center-button { top: 10px; right: 10px; } /* ★ 新しいボタンの位置 */
+      #reset-center-button {
+            top: 10px;  /* 一番上 */
+            right: 10px;
+        }
+        #start-tracking-button {
+            top: 190px; /* ★ 「初期位置」ボタンの下 */
+            right: 10px;
+        }
+        #stop-tracking-button {
+            top: 190px; /* ★ startボタンと同じ位置に */
+            right: 10px;
+            display: none;
+        }
 
       /* --- ボトムシート関連のスタイル --- */
 
@@ -552,10 +562,11 @@
         }
 
          // ★★★ innerHTMLの生成を一度で行う ★★★
+        //マーカーの使用文字
         markerDiv.innerHTML = `
           <div class="overlay marker-text">${textContent.substring(0, 1)}</div>
-          <div class="overlay checkmark-overlay">✓</div>
-          <div class="overlay p-overlay">P</div>
+          <div class="overlay checkmark-overlay">ー</div>
+          <div class="overlay p-overlay">〇</div>
         `;
         markerDiv.style.backgroundColor = backgroundColor;
         
@@ -907,5 +918,6 @@
     </script>
   </body>
 </html>
+
 
 
