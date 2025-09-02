@@ -40,7 +40,7 @@
             font-size: 42px;
             text-align: center;
       }
-      .map-button:hover { background-color: #f4f4f4; }//青っぽい色
+      .map-button:hover { background-color: #f4f4f4; }//灰色
 
       .top-button {
           top: 10px;
@@ -194,7 +194,7 @@
         width: 100%; 
         height: 100%;
         border-radius: 50%;
-        color: white;
+        color: #000000;
         font-weight: bold;
         display: flex;
         justify-content: center;
@@ -213,14 +213,8 @@
       /* レ点と"P"の共通スタイル */
       .checkmark-overlay, .p-overlay {
           font-size: 78px;
-          /* ★ 文字の塗りを透明にする */
           color: #000;
-          transform: translateY(-40px); /* 上に10pxずらす */
-      
-          /* ★ 縁取り線を設定 (太さ 色) */
-          -webkit-text-stroke: 1px black; /* 2pxの黒い縁取り */
-          text-stroke: 1px black; /* 標準プロパティ（対応ブラウザは少ない） */
-          
+          transform: translateY(-48px); /* 上に10pxずらす */  
       }
 
       .apartment-marker, .autolock-marker {
@@ -592,7 +586,7 @@
         const statusAS = markerData.statusAS;
 
         // ★★★ ここの判定ロジックを修正 ★★★
-        let backgroundColor = "#007BFF"; // デフォルトの色（青色など）
+        let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
         let textContent = markerData.name || "?";
 
         if (statusAQ === '長期') {
@@ -963,6 +957,7 @@
     </script>
   </body>
 </html>
+
 
 
 
