@@ -214,11 +214,10 @@
       .checkmark-overlay, .p-overlay {
           color: transparent;
           font-size: 72px;
+           /* 外側の黒い縁 */
           text-shadow: 
-            1px 1px 0 #000,   /* 右下 */
-           -1px 1px 0 #000,   /* 左下 */
-           -1px -1px 0 #000,  /* 左上 */
-            1px -1px 0 #000;  /* 右上 */
+          /* 外側の黒い縁 */
+          3px 3px 0 #000, -3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000;
       }
 
       .apartment-marker, .autolock-marker {
@@ -961,6 +960,7 @@
     </script>
   </body>
 </html>
+
 
 
 
