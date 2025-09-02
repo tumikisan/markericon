@@ -212,12 +212,14 @@
 
       /* レ点と"P"の共通スタイル */
       .checkmark-overlay, .p-overlay {
-          color: transparent;
           font-size: 72px;
-           /* 外側の黒い縁 */
-          text-shadow: 
-          /* 外側の黒い縁 */
-          3px 3px 0 #000, -3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000;
+          /* ★ 文字の塗りを透明にする */
+          color: transparent;
+      
+          /* ★ 縁取り線を設定 (太さ 色) */
+          -webkit-text-stroke: 2px black; /* 2pxの黒い縁取り */
+          text-stroke: 2px black; /* 標準プロパティ（対応ブラウザは少ない） */
+          
       }
 
       .apartment-marker, .autolock-marker {
@@ -960,6 +962,7 @@
     </script>
   </body>
 </html>
+
 
 
 
