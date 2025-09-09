@@ -623,6 +623,23 @@
             [STATE_CHECKED]: "会えた",
             [STATE_P]: "P"
         };
+
+        // ★★★【追加】マーカーの色を更新するためのヘルパー関数 ★★★
+        // この関数を定義することで、初期描画とクリック後の更新で同じロジックを使える
+        function updateMarkerColor(div, statusAQ, statusAT) {
+            let backgroundColor = "#ffffff"; // デフォルトの色
+            if (statusAQ === '長期') {
+                backgroundColor = "#FFC107"; // 黄色
+            } else if (statusAQ === '拒否') {
+                backgroundColor = "#DC3545"; // 赤色
+            } else if (statusAQ === '空') {
+                backgroundColor = "#343A40"; // 黒に近い色
+            } else if (statusAT === '長期') {
+                backgroundColor = "#28A745"; // 緑色
+            }
+            div.style.backgroundColor = backgroundColor;
+        }
+        
         // 1. マーカーのコンテンツとなるdiv要素を作成
         const markerDiv = document.createElement("div");
         markerDiv.className = "css-marker"; // 上で定義したCSSクラスを適用
@@ -700,12 +717,23 @@
             markerDiv.classList.add('is-updating');
 
             try {
-                // サーバー/ローカルDBへの更新処理を待つ
-                await handleStatusUpdate(updateOptions);
+                 // ★【変更】サーバー/ローカルDBへの更新処理を待ち、戻り値を受け取る
+                const newStatusData = await handleStatusUpdate(updateOptions);
 
                 // --- 成功時の処理 ---
                 currentState = nextState;
                 updateAppearance(currentState); // UIを新しい状態に更新
+
+                // ★★★【追加】ここからが色を更新するロジック ★★★
+                // サーバーから新しいステータスが返ってきた場合のみ色を更新
+                if (newStatusData) {
+                    // 内部で保持しているデータも更新する（任意ですが推奨）
+                    markerData.statusAQ = newStatusData.newStatusAQ;
+                    markerData.statusAT = newStatusData.newStatusAT;
+                    // ヘルパー関数を使ってマーカーの色を更新
+                    updateMarkerColor(markerDiv, newStatusData.newStatusAQ, newStatusData.newStatusAT);
+                }
+                // ★★★ 追加部分ここまで ★★★
 
                 // 成功したことを視覚的にフィードバック（緑の枠線を1.5秒表示）
                 markerDiv.style.outline = '4px solid #28A745';
@@ -1045,6 +1073,43 @@
         if (navigator.onLine) {
             try {
                 const updates = [{ row: updateOptions.rowNumber, status: updateOptions.valueToSet }];
+                // ★サーバーからの戻り値を受け取る
+                const resultData = await serverRequest('batchUpdateStatuses', { updates: updates });
+                console.log("Online update successful. Server response:", resultData);
+                // ★結果を呼び出し元に返す (今回は1件ずつの更新なので最初の要素を返す)
+                return resultData[0];
+            } catch (error) {
+                // オンラインでもサーバーリクエストが失敗した場合、フォールバックとしてキューに追加
+                console.warn("Online update failed, falling back to queue.", error);
+                await dbManager.putToQueue(updateOptions);
+                // Background Syncに登録を試みる
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    const sw = await navigator.serviceWorker.ready;
+                    await sw.sync.register('sync-updates');
+                }
+                // 即時更新には失敗したことを呼び出し元に伝えるためにエラーを投げる
+                throw new Error("サーバーとの通信に失敗しました。変更は後で同期されます。");
+            }
+        } else {
+            // オフラインの場合、キューに入れるだけ
+            console.log("Offline, update queued.");
+            await dbManager.putToQueue(updateOptions);
+            // Background Syncに登録を試みる
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                const sw = await navigator.serviceWorker.ready;
+                await sw.sync.register('sync-updates');
+            }
+            // オフライン時はサーバーからデータが返らないのでnullを返す
+            return null;
+        }
+      }
+
+        /*
+        
+         // オンラインの場合、直接サーバーにリクエストして完了を待つ
+        if (navigator.onLine) {
+            try {
+                const updates = [{ row: updateOptions.rowNumber, status: updateOptions.valueToSet }];
                 await serverRequest('batchUpdateStatuses', { updates: updates });
                 console.log("Online update successful.");
             } catch (error) {
@@ -1072,7 +1137,7 @@
         }
       }
 
-        /*
+        
         
         // 1. 楽観的UI更新：まず見た目を先に変える
         updateUI();
@@ -1125,4 +1190,5 @@
     </script>
   </body>
 </html>
+
 
