@@ -870,15 +870,6 @@
             } catch (error) {
                 console.error("Sync failed:", error.message);
             }
-
-        /*
-            
-            // ★ serverRequestを使って一括更新
-            await serverRequest('batchUpdateStatuses', { spreadsheetId: SPREADSHEET_ID, updates: updates });
-            
-            await dbManager.clearQueue();
-            console.log("Sync successful!");
-            */
         }
 
       // ★★★ 新しいserverRequest関数 ★★★
@@ -958,30 +949,3 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
