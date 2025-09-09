@@ -234,6 +234,50 @@
           color: #6f42c1;
           font-size: 50px;
       }
+
+      /* --- マーカー更新中スタイル --- */
+      .spinner {
+          border: 8px solid rgba(255, 255, 255, 0.3); /* 薄いボーダー */
+          border-radius: 50%;
+          border-top: 8px solid #ffffff; /* スピナーの色 */
+          width: 64px;
+          height: 64px;
+          animation: spin 1s linear infinite;
+          display: none; /* 初期状態は非表示 */
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          margin-top: -32px; /* heightの半分 */
+          margin-left: -32px; /* widthの半分 */
+      }
+
+      @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+      }
+
+      /* 更新中クラスが付いたマーカーのスタイル */
+      .css-marker.is-updating {
+          pointer-events: none; /* 更新中はクリックできないようにする */
+          opacity: 0.7; /* 少し半透明にする */
+      }
+
+      /* 更新中は他のオーバーレイ（文字、✓、P）を隠す */
+      .css-marker.is-updating .overlay {
+          display: none !important;
+      }
+      
+      /* 更新中クラスが付いたらスピナーを表示 */
+      .css-marker.is-updating .spinner {
+          display: block;
+      }
+      
+      /* 部屋リストのボタンが無効化された際のスタイル */
+      .room-item-actions button:disabled {
+          cursor: not-allowed;
+          opacity: 0.6;
+      }
+      /* --- マーカー更新中スタイル ここまで--- */
       
 
     </style>
@@ -607,6 +651,7 @@
           <div class="overlay marker-text">${textContent.substring(0, 1)}</div>
           <div class="overlay checkmark-overlay">✓</div>
           <div class="overlay p-overlay">P</div>
+          <div class="spinner"></div>
         `;
         markerDiv.style.backgroundColor = backgroundColor;
         
@@ -639,6 +684,53 @@
         updateAppearance(currentState); // 初期表示
 
         // c. クリックイベントリスナー
+        markerDiv.addEventListener('click', async () => {
+            // 更新中の場合は多重実行を防ぐ
+            if (markerDiv.classList.contains('is-updating')) {
+                return;
+            }
+
+            const oldState = currentState;
+            // 状態を次の段階に進める (0 -> 1 -> 2 -> 0)
+            const nextState = (currentState + 1) % 3;
+            const valueToSet = STATUS_VALUES[nextState];
+            const updateOptions = { rowNumber: markerData.rowNumber, valueToSet: valueToSet };
+
+            // --- UIを「更新中」状態にする ---
+            markerDiv.classList.add('is-updating');
+
+            try {
+                // サーバー/ローカルDBへの更新処理を待つ
+                await handleStatusUpdate(updateOptions);
+
+                // --- 成功時の処理 ---
+                currentState = nextState;
+                updateAppearance(currentState); // UIを新しい状態に更新
+
+                // 成功したことを視覚的にフィードバック（緑の枠線を1.5秒表示）
+                markerDiv.style.outline = '4px solid #28A745';
+                setTimeout(() => { markerDiv.style.outline = 'none'; }, 1500);
+
+            } catch (error) {
+                // --- 失敗時の処理 ---
+                console.error('Update failed:', error);
+                // UIは変更せず、元の状態を維持
+                updateAppearance(oldState); 
+                alert(error.message || 'データの更新に失敗しました。');
+
+                // 失敗したことを視覚的にフィードバック（赤の枠線を2秒表示）
+                markerDiv.style.outline = '4px solid #DC3545';
+                setTimeout(() => { markerDiv.style.outline = 'none'; }, 2000);
+            
+            } finally {
+                // --- 成功・失敗に関わらずUIを通常状態に戻す ---
+                markerDiv.classList.remove('is-updating');
+            }
+        });
+
+        /*
+
+        // c. クリックイベントリスナー
         markerDiv.addEventListener('click', () => {
            const oldState = currentState;
             // 状態を次の段階に進める (0 -> 1 -> 2 -> 0)
@@ -661,6 +753,9 @@
                 }
             );
         });
+
+        */
+          
         
       }
 
@@ -785,6 +880,50 @@
                   </div>
               `;
 
+            // 4. ステータス変更ボタンにイベントを追加
+              roomItem.querySelectorAll('.room-item-actions button').forEach(button => {
+                  button.addEventListener('click', async () => { // ★ async を追加
+                      const allButtons = button.closest('.room-item-actions').querySelectorAll('button');
+
+                      // 更新中の場合は多重実行を防ぐ
+                      if (allButtons[0].disabled) return;
+
+                      // 1. まず、現在の状態を保存しておく（失敗時のロールバック用）
+                      const oldStatus = room.status;
+
+                      // 2. 新しい状態を計算
+                      const newStatus = button.dataset.status;
+                      const valueToSet = (oldStatus === newStatus) ? "" : newStatus;
+                      const updateOptions = { rowNumber: room.row, valueToSet: valueToSet };
+                      
+                      // --- UIを「更新中」状態にする ---
+                      allButtons.forEach(b => b.disabled = true);
+
+                      try {
+                          // サーバー/ローカルDBへの更新処理を待つ
+                          await handleStatusUpdate(updateOptions);
+
+                          // --- 成功時の処理 ---
+                          room.status = valueToSet;
+                          updateRoomListAppearance(apartmentData);
+
+                      } catch(error) {
+                          // --- 失敗時の処理 ---
+                          console.error('Update failed:', error);
+                          alert(error.message || 'データの更新に失敗しました。');
+                          // 状態を元に戻してUIを再描画
+                          room.status = oldStatus;
+                          updateRoomListAppearance(apartmentData);
+
+                      } finally {
+                          // --- 成功・失敗に関わらずUIを通常状態に戻す ---
+                          allButtons.forEach(b => b.disabled = false);
+                      }
+                });
+              });
+
+            /*
+
               // 4. ステータス変更ボタンにイベントを追加
               roomItem.querySelectorAll('.room-item-actions button').forEach(button => {
                   button.addEventListener('click', () => {
@@ -815,6 +954,8 @@
                       );
                 });
               });
+
+              */
 
               sheetContent.appendChild(roomItem);
           });
@@ -900,6 +1041,39 @@
       }
 
       async function handleStatusUpdate(updateOptions, updateUI, rollbackUI) {
+         // オンラインの場合、直接サーバーにリクエストして完了を待つ
+        if (navigator.onLine) {
+            try {
+                const updates = [{ row: updateOptions.rowNumber, status: updateOptions.valueToSet }];
+                await serverRequest('batchUpdateStatuses', { updates: updates });
+                console.log("Online update successful.");
+            } catch (error) {
+                // オンラインでもサーバーリクエストが失敗した場合、フォールバックとしてキューに追加
+                console.warn("Online update failed, falling back to queue.", error);
+                await dbManager.putToQueue(updateOptions);
+                // Background Syncに登録を試みる
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    const sw = await navigator.serviceWorker.ready;
+                    await sw.sync.register('sync-updates');
+                }
+                // 即時更新には失敗したことを呼び出し元に伝えるためにエラーを投げる
+                throw new Error("サーバーとの通信に失敗しました。変更は後で同期されます。");
+            }
+        } else {
+            // オフラインの場合、キューに入れるだけ
+            console.log("Offline, update queued.");
+            await dbManager.putToQueue(updateOptions);
+            // Background Syncに登録を試みる
+            if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                const sw = await navigator.serviceWorker.ready;
+                await sw.sync.register('sync-updates');
+            }
+            // オフライン時は即時更新できないが、処理は成功とみなし、UIは更新させる
+        }
+      }
+
+        /*
+        
         // 1. 楽観的UI更新：まず見た目を先に変える
         updateUI();
         
@@ -927,6 +1101,8 @@
         }
       }
 
+      */
+
       function onFailure(error) {
             alert("データの読み込みに失敗しました。\n詳細: " + error.message);
             console.error(error);
@@ -949,3 +1125,4 @@
     </script>
   </body>
 </html>
+
