@@ -278,6 +278,49 @@
           opacity: 0.6;
       }
       /* --- マーカー更新中スタイル ここまで--- */
+
+      /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
+      
+      /* ボタンを格納しているコンテナの位置調整 */
+      .gm-style-mtc {
+          margin-top: 10px !important;
+          margin-left: 10px !important;
+      }
+
+      /* ボタン自体のスタイル */
+      .gm-style-mtc button {
+          height: 88px !important; /* ★他のボタンの高さに合わせる */
+          width: auto !important;   /* 幅は自動 */
+          padding: 8px 24px !important; /* ★パディングを調整 */
+          background-color: #fff !important;
+          border: 2px solid #fff !important;
+          border-radius: 3px !important;
+          box-shadow: 0 2px 6px rgba(0,0,0,.3) !important;
+          cursor: pointer !important;
+          font-family: Roboto, sans-serif !important;
+          font-size: 42px !important; /* ★フォントサイズを大きくする */
+          color: #222 !important;
+          font-weight: 500 !important;
+          line-height: 1 !important; /* 文字の縦位置調整 */
+      }
+
+      /* ボタン間の仕切り線を非表示にする */
+      .gm-style-mtc div + div {
+          border-left: none !important;
+      }
+
+      /* 選択されているボタンのスタイル */
+      .gm-style-mtc button.gm-style-mtc-selected {
+          background-color: #e0e0e0 !important; /* 選択中は少し濃い灰色に */
+          color: #000 !important;
+      }
+      
+      /* ホバー時のスタイル */
+      .gm-style-mtc button:not(.gm-style-mtc-selected):hover {
+          background-color: #f4f4f4 !important; /* 他のボタンのホバー色に合わせる */
+      }
+
+      /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
       
 
     </style>
@@ -458,6 +501,17 @@
                   scaleControl: false,
                   gestureHandling: 'greedy',
                   disableDoubleClickZoom: true
+                  // ★★★ ここからが追加・変更部分 ★★★
+                  mapTypeControl: true, // MapTypeControlを有効にする
+                  mapTypeControlOptions: {
+                  // ドロップダウンではなく、横並びのボタンにする
+                  style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                  // 位置を左上に指定
+                  position: google.maps.ControlPosition.TOP_LEFT,
+                  // 表示するマップタイプを指定（これがないと地形なども表示される）
+                  mapTypeIds: ['roadmap', 'satellite']
+            }
+            // ★★★ 追加・変更部分ここまで ★★★
               });
 
              // グローバル変数に初期位置を保存
@@ -1226,6 +1280,7 @@
     </script>
   </body>
 </html>
+
 
 
 
