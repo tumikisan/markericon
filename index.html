@@ -287,6 +287,7 @@
     <button id="reset-center-button" class="map-button top-button">初期位置に戻る</button>
     <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button middle-button" style="display: none;">現在地非表示</button>
+    <button id="force-reload-button" class="map-button" style="top: 206px; right: 10px;">強制更新</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
 
@@ -488,6 +489,41 @@
           const resetButton = document.getElementById('reset-center-button');
           const startButton = document.getElementById("start-tracking-button");
           const stopButton = document.getElementById("stop-tracking-button");
+
+           // ★★★ 強制更新ボタンの要素を取得してイベントを追加 ★★★
+          const reloadButton = document.getElementById('force-reload-button');
+
+          // ★★★ ここからが追加するイベントリスナー ★★★
+          reloadButton.addEventListener('click', async () => {
+              if (!confirm('キャッシュをクリアして地図データを再読み込みしますか？\n（オフライン時の未送信データは保持されます）')) {
+                  return; // ユーザーがキャンセルしたら何もしない
+              }
+
+              // ユーザーに処理中であることを知らせる
+              const titleElement = document.getElementById('page-title');
+              titleElement.textContent = '更新中...';
+              reloadButton.disabled = true;
+              reloadButton.textContent = '更新中';
+
+              try {
+                  // 1. IndexedDBの地図データキャッシュをクリア
+                  await dbManager.clearCachedFeatures();
+                  console.log('Map data cache cleared.');
+
+                  // 2. ページをリロードして、最初からデータを読み直させる
+                  //    これにより、initializeMapAndFeatures が再度実行される
+                  window.location.reload();
+
+              } catch (error) {
+                  console.error('Failed to clear cache and reload:', error);
+                  alert('更新処理に失敗しました。');
+                  // 失敗した場合はUIを元に戻す
+                  titleElement.textContent = document.title; // 元のタイトルに戻す
+                  reloadButton.disabled = false;
+                  reloadButton.textContent = '強制更新';
+              }
+          });
+          // ★★★ 追加部分ここまで ★★★
           
           resetButton.addEventListener('click', () => {
               if (map && initialCenterPosition) {
@@ -1190,5 +1226,6 @@
     </script>
   </body>
 </html>
+
 
 
