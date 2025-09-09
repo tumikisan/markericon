@@ -515,7 +515,7 @@
                   zoomControl: false,
                   scaleControl: false,
                   gestureHandling: 'greedy',
-                  disableDoubleClickZoom: true
+                  disableDoubleClickZoom: true,
                   // ★★★ ここからが追加・変更部分 ★★★
                   mapTypeControl: true, // MapTypeControlを有効にする
                   mapTypeControlOptions: {
@@ -525,8 +525,8 @@
                   position: google.maps.ControlPosition.TOP_LEFT,
                   // 表示するマップタイプを指定（これがないと地形なども表示される）
                   mapTypeIds: ['roadmap', 'satellite']
-            }
-            // ★★★ 追加・変更部分ここまで ★★★
+                  }
+                  // ★★★ 追加・変更部分ここまで ★★★
               });
 
              // グローバル変数に初期位置を保存
@@ -1295,6 +1295,7 @@
     </script>
   </body>
 </html>
+
 
 
 
