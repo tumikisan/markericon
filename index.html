@@ -336,6 +336,11 @@
       }
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
+
+      .bottom-left-button {
+          bottom: 10px;
+          left: 10px;
+      }
       
 
     </style>
@@ -345,7 +350,7 @@
     <button id="reset-center-button" class="map-button top-button">初期位置に戻る</button>
     <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button middle-button" style="display: none;">現在地非表示</button>
-    <button id="force-reload-button" class="map-button" style="top: 206px; right: 10px;">強制更新</button>
+    <button id="force-reload-button" class="map-button bottom-left-button">強制更新</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
 
@@ -1295,6 +1300,7 @@
     </script>
   </body>
 </html>
+
 
 
 
