@@ -104,6 +104,27 @@
         return new Promise(resolve => { tx.oncomplete = () => resolve(); });
     }
 
+    async function clearCachedFeatures() {
+      const db = await openDb();
+      const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(FEATURES_STORE_NAME);
+      
+      // cacheFeatures関数でキーを 'main' に固定しているため、
+      // 削除する際も同じ 'main' を指定します。
+      const request = store.delete('main');
+      
+      // 処理が完了するのを待つ
+      await promisifyRequest(request); 
+      
+      // トランザクションの完了を待つ (任意ですが、より確実になります)
+      return new Promise(resolve => { 
+        tx.oncomplete = () => {
+          console.log('Cache entry "main" deleted successfully.');
+          resolve(); 
+        };
+      });
+    }
+
     // ★ 2. return { ... } を追加
     return {
       putToQueue: putToQueue,
@@ -111,7 +132,9 @@
       clearQueue: clearQueue,
       setConfig,
       getConfig,
-      cacheFeatures, getCachedFeatures
+      cacheFeatures, 
+      getCachedFeatures,
+      clearCachedFeatures
     };
 
   })(); // ★ 3. })(); を追加
@@ -323,6 +346,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
