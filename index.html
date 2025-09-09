@@ -280,44 +280,59 @@
       /* --- マーカー更新中スタイル ここまで--- */
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
+     /* --- Googleマップの地図/航空写真ボタンのスタイル上書き (改) --- */
       
       /* ボタンを格納しているコンテナの位置調整 */
       .gm-style-mtc {
-          margin-top: 10px !important;
-          margin-left: 10px !important;
+          margin: 10px 0 0 10px !important;
+          /* 親要素の高さを自動にすることで、中のボタンが大きくなってもはみ出ないようにする */
+          height: auto !important; 
       }
 
-      /* ボタン自体のスタイル */
-      .gm-style-mtc button {
-          height: 88px !important; /* ★他のボタンの高さに合わせる */
-          width: auto !important;   /* 幅は自動 */
-          padding: 8px 24px !important; /* ★パディングを調整 */
+      /* ★★★ ボタン自体のスタイルをより強力に指定 ★★★ */
+      /* div.gm-style-mtc > button のように、直接の子要素を指定して優先度を上げる */
+      div.gm-style-mtc > button {
+          height: auto !important; /* 高さはpaddingに任せる */
+          width: auto !important;   
+          padding: 12px 24px !important; /* ★他のボタンに合わせたpadding */
           background-color: #fff !important;
-          border: 2px solid #fff !important;
-          border-radius: 3px !important;
+          border: none !important; /* デフォルトの境界線をリセット */
           box-shadow: 0 2px 6px rgba(0,0,0,.3) !important;
           cursor: pointer !important;
+          
+          /* ★★★ 文字のスタイルを最優先で指定 ★★★ */
           font-family: Roboto, sans-serif !important;
-          font-size: 42px !important; /* ★フォントサイズを大きくする */
-          color: #222 !important;
+          font-size: 42px !important; /* ★フォントサイズを強制指定 */
           font-weight: 500 !important;
-          line-height: 1 !important; /* 文字の縦位置調整 */
+          color: #222 !important;
+          line-height: 1.2 !important; /* 行の高さを調整 */
+          display: block !important; /* displayプロパティも念のため指定 */
       }
 
       /* ボタン間の仕切り線を非表示にする */
       .gm-style-mtc div + div {
-          border-left: none !important;
+          display: none !important;
+      }
+      
+      /* 2つのボタンを隣接させるための調整 */
+      .gm-style-mtc button:first-of-type {
+          border-radius: 3px 0 0 3px !important;
+          margin-right: 0 !important;
+      }
+      .gm-style-mtc button:last-of-type {
+          border-radius: 0 3px 3px 0 !important;
+          border-left: 1px solid #ddd !important; /* 間に薄い線を入れる */
       }
 
       /* 選択されているボタンのスタイル */
-      .gm-style-mtc button.gm-style-mtc-selected {
-          background-color: #e0e0e0 !important; /* 選択中は少し濃い灰色に */
+      .gm-style-mtc button[aria-pressed="true"] { /* ★セレクタをより正確に */
+          background-color: #e0e0e0 !important; 
           color: #000 !important;
       }
       
       /* ホバー時のスタイル */
-      .gm-style-mtc button:not(.gm-style-mtc-selected):hover {
-          background-color: #f4f4f4 !important; /* 他のボタンのホバー色に合わせる */
+      .gm-style-mtc button:not([aria-pressed="true"]):hover {
+          background-color: #f4f4f4 !important; 
       }
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
@@ -1280,6 +1295,7 @@
     </script>
   </body>
 </html>
+
 
 
 
