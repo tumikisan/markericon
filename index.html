@@ -703,6 +703,8 @@
                 placeStaticMarker(item);
             } else if (item.type === 'polygon') {
                 drawPolygon(item);
+            } else if (item.type === 'linestring') { // ★★★ この分岐を追加 ★★★
+                drawLinestring(item);
             }
         });
       }
@@ -898,6 +900,34 @@
       }
 
       function drawPolygon(polygonData) {
+        const wkt = polygonData.rawData;
+
+        // "POLYGON ((...))" から座標部分を抽出
+        const coordString = wkt.match(/\(\((.*)\)\)/);
+        if (!coordString || !coordString[1]) {
+            console.error("解析後のWKTデータが無効です:", wkt);
+            return;
+        }
+
+        // 座標をGoogle Mapsが要求する {lat, lng} の配列に変換
+        const path = coordString[1].split(',').map(pair => {
+            const coords = pair.trim().split(' ');
+            return { lat: parseFloat(coords[1]), lng: parseFloat(coords[0]) };
+        });
+
+        const polygon = new google.maps.Polygon({
+            paths: path,
+            strokeColor: "#000000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+            fillOpacity: 0.0, // 塗りつぶしなし
+            map: map,
+            clickable: false,
+        });
+      }
+
+        /*
+        
         const rawData = polygonData.rawData;
         let wkt = '';
         let name = '';
@@ -938,6 +968,36 @@
             clickable: false,
         });
         // (ポリゴンのクリックイベントなども必要ならここに追加)
+      }
+
+      */
+
+      function drawLinestring(linestringData) {
+        const wkt = linestringData.rawData;
+
+        // "LINESTRING (lng lat, lng lat, ...)" から座標部分を抽出
+        const coordString = wkt.match(/\((.*)\)/);
+        if (!coordString || !coordString[1]) {
+            console.error("解析後のLINESTRINGデータが無効です:", wkt);
+            return;
+        }
+
+        // 座標をGoogle Mapsが要求する {lat, lng} の配列に変換
+        const path = coordString[1].split(',').map(pair => {
+            // WKTの各座標ペアから Z値(0.0) を取り除く
+            const coords = pair.trim().split(' ').slice(0, 2);
+            return { lat: parseFloat(coords[1]), lng: parseFloat(coords[0]) };
+        });
+
+        // google.maps.Polyline を使って線を描画
+        const polyline = new google.maps.Polyline({
+            path: path,
+            strokeColor: "#FF0000", // 線の色（赤）
+            strokeOpacity: 0.8,
+            strokeWeight: 5,         // 線の太さ
+            map: map,
+            clickable: false,
+        });
       }
 
       // --- アパートマーカーを配置する関数を修正 ---
@@ -1300,6 +1360,7 @@
     </script>
   </body>
 </html>
+
 
 
 
