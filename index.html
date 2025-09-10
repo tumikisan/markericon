@@ -867,36 +867,6 @@
                 markerDiv.classList.remove('is-updating');
             }
         });
-
-        /*
-
-        // c. クリックイベントリスナー
-        markerDiv.addEventListener('click', () => {
-           const oldState = currentState;
-            // 状態を次の段階に進める (0 -> 1 -> 2 -> 0)
-            //currentState = (currentState + 1) % 3;
-            
-            // 見た目を即座に更新
-            updateAppearance(currentState);
-            
-            // スプレッドシートに書き込む値を取得
-            currentState = (currentState + 1) % 3;
-            const valueToSet = STATUS_VALUES[currentState];
-
-             // ★★★ ここを差し替え ★★★
-            handleStatusUpdate(
-                { rowNumber: markerData.rowNumber, valueToSet: valueToSet }, // 更新オプション
-                () => updateAppearance(currentState), // UI更新関数
-                () => { // ロールバック関数
-                    currentState = oldState;
-                    updateAppearance(oldState);
-                }
-            );
-        });
-
-        */
-          
-        
       }
 
       function drawPolygon(polygonData) {
@@ -925,52 +895,6 @@
             clickable: false,
         });
       }
-
-        /*
-        
-        const rawData = polygonData.rawData;
-        let wkt = '';
-        let name = '';
-
-        // "))," を区切り文字としてWKTと名前を分離するロジック
-        const wktEndDelimiter = ')),';
-        const delimiterIndex = rawData.indexOf(wktEndDelimiter);
-
-        if (delimiterIndex !== -1) {
-            // WKT部分は "POLYGON..." から "))" まで
-            wkt = rawData.substring(0, delimiterIndex + 2); // "))" の2文字分を含める
-            // 名前部分は、区切り文字の後から始まり、最後のカンマを取り除く
-            name = rawData.substring(delimiterIndex + wktEndDelimiter.length).replace(/,$/, '').trim();
-        } else {
-            // 区切り文字が見つからない場合は、全体がWKTデータだと仮定する
-            wkt = rawData;
-            name = '名前なし';
-        }
-
-
-        const coordString = wkt.match(/\(\((.*)\)\)/);
-        
-        if (!coordString || !coordString[1]) {
-          console.error("解析後のWKTデータが無効です:", wkt);
-          return;
-        }  
-        const path = coordString[1].split(',').map(pair => {
-            const coords = pair.trim().split(' ');
-            return { lat: parseFloat(coords[1]), lng: parseFloat(coords[0]) };
-        });
-        const polygon = new google.maps.Polygon({
-            paths: path,
-            strokeColor: "#000000",
-            strokeOpacity: 1.0,
-            strokeWeight: 2,
-            fillOpacity: 0.0,
-            map: map,
-            clickable: false,
-        });
-        // (ポリゴンのクリックイベントなども必要ならここに追加)
-      }
-
-      */
 
       function drawLinestring(linestringData) {
         const wkt = linestringData.rawData;
@@ -1022,11 +946,6 @@
           const displayText = markerData.key + "A"; 
           markerDiv.textContent = displayText;
 
-          // オートロック用の特別なスタイルを設定
-          //markerDiv.style.backgroundColor = "#6f42c1"; // 紫色
-          //markerDiv.style.color = "white";
-          //markerDiv.textContent = "A";
-
           const marker = new google.maps.marker.AdvancedMarkerElement({
               position: { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) },
               map: map,
@@ -1066,8 +985,6 @@
               // 判定されたクラスを room-item に追加
               roomItem.className = `room-item ${statusClass}`;
               // --- ★★★ 判定ロジックここまで ★★★ ---
-
-              //roomItem.className = 'room-item';
               
               // ★ 各部屋のHTMLを生成
               roomItem.innerHTML = `
@@ -1119,41 +1036,6 @@
                       }
                 });
               });
-
-            /*
-
-              // 4. ステータス変更ボタンにイベントを追加
-              roomItem.querySelectorAll('.room-item-actions button').forEach(button => {
-                  button.addEventListener('click', () => {
-                      // クリックされたボタンのステータスを取得
-                      //const newStatus = button.dataset.status;
-                      
-                     // ★★★ 楽観的UI更新のロジック ★★★
-    
-                      // 1. まず、現在の状態を保存しておく（失敗時のロールバック用）
-                      const oldStatus = room.status;
-
-                      // 2. 新しい状態を計算し、ローカルデータを更新
-                      const newStatus = button.dataset.status;
-                      const valueToSet = (oldStatus === newStatus) ? "" : newStatus;
-                      room.status = valueToSet;
-
-                      // ★★★ ここを差し替え ★★★
-                      handleStatusUpdate(
-                          { rowNumber: room.row, valueToSet: valueToSet }, // 更新オプション
-                          () => { // UI更新関数
-                              room.status = valueToSet;
-                              updateRoomListAppearance(apartmentData);
-                          },
-                          () => { // ロールバック関数
-                              room.status = oldStatus;
-                              updateRoomListAppearance(apartmentData);
-                          }
-                      );
-                });
-              });
-
-              */
 
               sheetContent.appendChild(roomItem);
           });
@@ -1274,70 +1156,6 @@
         }
       }
 
-        /*
-        
-         // オンラインの場合、直接サーバーにリクエストして完了を待つ
-        if (navigator.onLine) {
-            try {
-                const updates = [{ row: updateOptions.rowNumber, status: updateOptions.valueToSet }];
-                await serverRequest('batchUpdateStatuses', { updates: updates });
-                console.log("Online update successful.");
-            } catch (error) {
-                // オンラインでもサーバーリクエストが失敗した場合、フォールバックとしてキューに追加
-                console.warn("Online update failed, falling back to queue.", error);
-                await dbManager.putToQueue(updateOptions);
-                // Background Syncに登録を試みる
-                if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                    const sw = await navigator.serviceWorker.ready;
-                    await sw.sync.register('sync-updates');
-                }
-                // 即時更新には失敗したことを呼び出し元に伝えるためにエラーを投げる
-                throw new Error("サーバーとの通信に失敗しました。変更は後で同期されます。");
-            }
-        } else {
-            // オフラインの場合、キューに入れるだけ
-            console.log("Offline, update queued.");
-            await dbManager.putToQueue(updateOptions);
-            // Background Syncに登録を試みる
-            if ('serviceWorker' in navigator && 'SyncManager' in window) {
-                const sw = await navigator.serviceWorker.ready;
-                await sw.sync.register('sync-updates');
-            }
-            // オフライン時は即時更新できないが、処理は成功とみなし、UIは更新させる
-        }
-      }
-
-        
-        
-        // 1. 楽観的UI更新：まず見た目を先に変える
-        updateUI();
-        
-        // 2. 更新内容をキュー(IndexedDB)に追加
-        // updateOptionsには { rowNumber, valueToSet } などが含まれる
-        await dbManager.putToQueue(updateOptions);
-        
-        // 3. バックグラウンド同期をリクエスト
-        try {
-          if ('serviceWorker' in navigator && 'SyncManager' in window) {
-            const sw = await navigator.serviceWorker.ready;
-            await sw.sync.register('sync-updates');
-            console.log('Background sync registered');
-          } else {
-            // SyncManager非対応ブラウザ用のフォールバック
-            if (navigator.onLine) {
-              await syncLocalDataWithServer();
-            }
-          }
-        } catch (error) {
-          console.error('Failed to handle status update:', error);
-          // もし同期リクエスト自体に失敗したら、UIを元に戻す
-          rollbackUI();
-          alert('更新リクエストの処理中にエラーが発生しました。');
-        }
-      }
-
-      */
-
       function onFailure(error) {
             alert("データの読み込みに失敗しました。\n詳細: " + error.message);
             console.error(error);
@@ -1360,12 +1178,3 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
-
-
-
