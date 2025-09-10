@@ -140,8 +140,8 @@
   })(); // ★ 3. })(); を追加
 
   // --- IndexedDBヘルパー関数ここまで ---
-
-const CACHE_NAME = 'map-app-cache-v4.1'; 
+////index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2）。これが更新の引き金となります。
+const CACHE_NAME = 'map-app-cache-v4.2'; 
 const MAPS_CACHE_NAME = 'maps-tiles-cache-v1';
 
 // ★ オフラインで表示したいファイルのリスト
@@ -165,22 +165,30 @@ const urlsToCache = [
     self.skipWaiting(); // ★ 新しいSWをすぐに有効化するおまじない
   });
 
-  // 有効化時に古いキャッシュを削除する
+  // 新しいService Workerがアクティブになったら、古いキャッシュを削除
+//index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2）。これが更新の引き金となります。
   self.addEventListener('activate', event => {
     console.log('Service Worker: Activating...');
+    // ★★★ ホワイトリスト方式で、保持すべきキャッシュを明示する ★★★
+    const cacheWhitelist = [CACHE_NAME, MAPS_CACHE_NAME];
+
     event.waitUntil(
-      caches.keys().then(cacheNames => {
+      caches.keys().then((cacheNames) => {
         return Promise.all(
-          cacheNames.map(cache => {
-            if (cache !== CACHE_NAME) {
-              console.log('Service Worker: Clearing old cache');
-              return caches.delete(cache);
+          cacheNames.map((cacheName) => {
+            // ホワイトリストに含まれていないキャッシュ（＝古いバージョンのアプリキャッシュ）を削除
+            if (cacheWhitelist.indexOf(cacheName) === -1) {
+              console.log('Service Worker: Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
             }
           })
         );
+      }).then(() => {
+        // すべてのクライアント（タブ）の制御を新しいService Workerが引き継ぐ
+        console.log('Service Worker: Now ready to handle fetches!');
+        return self.clients.claim();
       })
     );
-    return self.clients.claim(); // ★ 新しいSWがすぐにページを制御するおまじない
   });
 
   // fetchイベントでリクエストを傍受（キャッシュファースト戦略）
@@ -346,3 +354,4 @@ const urlsToCache = [
       throw error;
     }
   }
+
