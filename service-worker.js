@@ -141,7 +141,7 @@
 
   // --- IndexedDBヘルパー関数ここまで ---
 
-const CACHE_NAME = 'map-app-cache-v4'; 
+const CACHE_NAME = 'map-app-cache-v4.1'; 
 const MAPS_CACHE_NAME = 'maps-tiles-cache-v1';
 
 // ★ オフラインで表示したいファイルのリスト
@@ -346,26 +346,3 @@ const urlsToCache = [
       throw error;
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
