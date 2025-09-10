@@ -382,6 +382,7 @@
       let initialCenterPosition = null;
       let watchId = null; // watchPositionのIDを保存する
       let currentLocationMarker = null; // 現在地マーカーを保存する
+      let infoWindow = null;
 
       // index.html の <script> タグのグローバルスコープ
 
@@ -1012,7 +1013,60 @@
               title: markerData.name
           });
 
-          // オートロックマーカーはクリックイベントを持たない
+        　// ★★★ ここからが追加・修正部分 ★★★
+           // ★★★ ここからが新しいロジック ★★★
+          
+          // R列の値(linkUrl)をチェックする
+          const potentialUrl = markerData.linkUrl;
+          let isValidUrl = false;
+          
+          // 1. URL形式かどうかを判定
+          //    - nullや空文字列でないこと
+          //    - "http://" または "https://" で始まること
+          if (potentialUrl && (potentialUrl.startsWith('http://') || potentialUrl.startsWith('https://'))) {
+              isValidUrl = true;
+          }
+
+          // 常にクリックできるようにカーソルはポインターにしておく
+          markerDiv.style.cursor = "pointer";
+
+          // マーカーにクリックイベントを追加
+          markerDiv.addEventListener('click', () => {
+              // 既存のInfoWindowが開いていれば閉じる
+              if (infoWindow) {
+                  infoWindow.close();
+              }
+              // InfoWindowがなければ新規作成
+              if (!infoWindow) {
+                  infoWindow = new google.maps.InfoWindow();
+              }
+
+              // 2. InfoWindowに表示するHTMLコンテンツを作成
+              let contentString = `
+                  <div style="font-size: 48px; font-family: sans-serif; padding: 10px;">
+                      <h4 style="margin: 0 0 10px 0;">${markerData.name}</h4>
+              `;
+
+              // 3. 有効なURLがある場合のみ、リンクボタンを追加
+              if (isValidUrl) {
+                  contentString += `
+                      <a href="${potentialUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                          関連リンクを開く
+                      </a>
+                  `;
+              } else if (potentialUrl) {
+                  // URL形式ではないが、何かしらのテキストがある場合はそれを表示
+                  contentString += `<p style="margin: 0; background-color: #f0f0f0; padding: 8px; border-radius: 4px;">${potentialUrl}</p>`;
+              }
+              
+              contentString += '</div>';
+
+              // InfoWindowにコンテンツを設定
+              infoWindow.setContent(contentString);
+              // マーカーに対してInfoWindowを開く
+              infoWindow.open(map, marker);
+          });
+          // ★★★ 追加・修正部分ここまで ★★★
       }
 
       // ★★★ ボトムシートを表示・制御する新しい関数 ★★★
@@ -1237,5 +1291,6 @@
     </script>
   </body>
 </html>
+
 
 
