@@ -567,6 +567,61 @@
            // ★★★ 強制更新ボタンの要素を取得してイベントを追加 ★★★
           const reloadButton = document.getElementById('force-reload-button');
 
+          reloadButton.addEventListener('click', () => {
+              if (!confirm('アプリケーションを最新バージョンに更新しますか？\n（オフライン中の未送信データは保持されます）')) {
+                  return;
+              }
+
+              const titleElement = document.getElementById('page-title');
+              titleElement.textContent = '更新を確認中...';
+              reloadButton.disabled = true;
+              reloadButton.textContent = '確認中';
+
+              if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistration()
+                      .then(registration => {
+                          if (!registration) {
+                              alert('Service Workerが見つかりません。通常のリロードを行います。');
+                              window.location.reload();
+                              return;
+                          }
+
+                          // サーバー上のservice-worker.jsと比較し、新しいバージョンがあればダウンロード
+                          return registration.update().then(newRegistration => {
+                              // 新しいService Workerがインストール中、またはインストール済みで待機中の場合
+                              if (newRegistration.installing || newRegistration.waiting) {
+                                  alert('新しいバージョンが見つかりました。インストール後にページが自動でリロードされます。');
+                                  
+                                  const sw = newRegistration.installing || newRegistration.waiting;
+
+                                  // 新しいSWが有効化(activated)された瞬間にリロードを実行する
+                                  sw.addEventListener('statechange', (e) => {
+                                      if (e.target.state === 'activated') {
+                                          window.location.reload();
+                                      }
+                                  });
+                              } else {
+                                  // 新しいバージョンが見つからなかった場合
+                                  alert('現在、最新バージョンです。念のためページをリロードします。');
+                                  window.location.reload();
+                              }
+                          });
+                      })
+                      .catch(error => {
+                          console.error('Service Workerの更新に失敗しました:', error);
+                          alert('更新チェックに失敗しました。通常のリロードを試みます。');
+                          window.location.reload();
+                      });
+              } else {
+                  // Service Worker非対応ブラウザの場合
+                  alert('Service Worker非対応のため、通常のリロードを行います。');
+                  window.location.reload();
+              }
+          });
+        // ★★★ 強制更新ボタンの要素を取得してイベントを追加 ここまで★★★
+
+        /*
+
           // ★★★ ここからが追加するイベントリスナー ★★★
           reloadButton.addEventListener('click', async () => {
               if (!confirm('キャッシュをクリアして地図データを再読み込みしますか？\n（オフライン時の未送信データは保持されます）')) {
@@ -597,6 +652,9 @@
                   reloadButton.textContent = '強制更新';
               }
           });
+
+          */
+        
           // ★★★ 追加部分ここまで ★★★
           
           resetButton.addEventListener('click', () => {
@@ -757,7 +815,7 @@
         markerDiv.className = "css-marker"; // 上で定義したCSSクラスを適用
 
         const statusAQ = markerData.statusAQ;
-        const statusAS = markerData.statusAS;
+        const statusAT = markerData.statusAT;
 
         // ★★★ ここの判定ロジックを修正 ★★★
         let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
@@ -769,7 +827,7 @@
             backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
         } else if (statusAQ === '空') {
             backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
-        } else if (statusAS === '長期') {
+        } else if (statusAT === '長期') {
             // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
             backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
         }
@@ -1178,3 +1236,4 @@
     </script>
   </body>
 </html>
+
