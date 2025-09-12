@@ -163,7 +163,7 @@
           color: #856404; /* 濃い黄 */
       }
 
-      .room-item.status-long-term-as { /* 長期 (AT) */
+      .room-item.status-long-term-as { /* 長期 (AS) */
           background-color: #d4edda; /* 薄い緑 */
       }
       .room-item.status-long-term-as .room-item-name {
@@ -798,7 +798,7 @@
 
         // ★★★【追加】マーカーの色を更新するためのヘルパー関数 ★★★
         // この関数を定義することで、初期描画とクリック後の更新で同じロジックを使える
-        function updateMarkerColor(div, statusAQ, statusAT) {
+        function updateMarkerColor(div, statusAQ, statusAS) {
             let backgroundColor = "#ffffff"; // デフォルトの色
             if (statusAQ === '長期') {
                 backgroundColor = "#FFC107"; // 黄色
@@ -806,7 +806,7 @@
                 backgroundColor = "#DC3545"; // 赤色
             } else if (statusAQ === '空') {
                 backgroundColor = "#343A40"; // 黒に近い色
-            } else if (statusAT === '長期') {
+            } else if (statusAS === '長期') {
                 backgroundColor = "#28A745"; // 緑色
             }
             div.style.backgroundColor = backgroundColor;
@@ -817,7 +817,7 @@
         markerDiv.className = "css-marker"; // 上で定義したCSSクラスを適用
 
         const statusAQ = markerData.statusAQ;
-        const statusAT = markerData.statusAT;
+        const statusAS = markerData.statusAS;
 
         // ★★★ ここの判定ロジックを修正 ★★★
         let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
@@ -829,7 +829,7 @@
             backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
         } else if (statusAQ === '空') {
             backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
-        } else if (statusAT === '長期') {
+        } else if (statusAS === '長期') {
             // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
             backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
         }
@@ -901,9 +901,9 @@
                 if (newStatusData) {
                     // 内部で保持しているデータも更新する（任意ですが推奨）
                     markerData.statusAQ = newStatusData.newStatusAQ;
-                    markerData.statusAT = newStatusData.newStatusAT;
+                    markerData.statusAS = newStatusData.newStatusAS;
                     // ヘルパー関数を使ってマーカーの色を更新
-                    updateMarkerColor(markerDiv, newStatusData.newStatusAQ, newStatusData.newStatusAT);
+                    updateMarkerColor(markerDiv, newStatusData.newStatusAQ, newStatusData.newStatusAS);
                 }
                 // ★★★ 追加部分ここまで ★★★
 
@@ -1091,7 +1091,7 @@
                   statusClass = 'status-long-term-aq';
               } else if (room.statusAQ === '空') {
                   statusClass = 'status-vacant';
-              } else if (room.statusAT === '長期') {
+              } else if (room.statusAS === '長期') {
                   statusClass = 'status-long-term-as';
               }
 
@@ -1291,6 +1291,7 @@
     </script>
   </body>
 </html>
+
 
 
 
