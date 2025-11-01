@@ -46,13 +46,12 @@
       }
       .map-button:hover { background-color: #f4f4f4; }//灰色
 
-      .top-button {
-        
+      .topp-button {
           top: 100px;
       }
+      
       .middle-button {
-          /* calc()を使って計算 */
-          top: 172px; /* 上記の計算結果 */
+          top: 172px;
       }
 
       /* ★ 各ボタンの位置を設定 */
@@ -352,7 +351,7 @@
   </head>
   <body>
     <h1 id="page-title">Loading...</h1>
-    <button id="reset-center-button" class="map-button top-button">初期位置に戻る</button>
+    <button id="reset-center-button" class="map-button topp-button">初期位置に戻る</button>
     <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button middle-button" style="display: none;">現在地非表示</button>
     <button id="force-reload-button" class="map-button bottom-left-button">強制更新</button>
@@ -1291,6 +1290,7 @@
     </script>
   </body>
 </html>
+
 
 
 
