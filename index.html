@@ -17,15 +17,18 @@
       /* index.html の <style> タグ内 */
       #page-title {
           position: absolute;
-          top: 10px;
-          left: 50%;
-          transform: translateX(-50%); /* ★ 水平方向の中央揃え */
+          top: 0;
+          left: 0;
+          width: 100%; /* 幅を画面いっぱいに */
           z-index: 5;
-          background-color: rgba(255, 255, 255, 0.8);
-          padding: 8px 16px;
-          border-radius: 4px;
-          font-size: 24px;
+          background-color: rgba(255, 255, 255, 0.85);
+          padding: 16px 0; /* 上下の余白を調整 */
+          font-size: 48px; /* フォントサイズを大きく */
+          font-weight: bold;
+          text-align: center; /* テキストを中央揃え */
+          box-sizing: border-box; /* paddingを含めて幅100%にする */
           margin: 0;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 境界を明確にするための影 */
       }
 
       .map-button {
@@ -44,11 +47,11 @@
       .map-button:hover { background-color: #f4f4f4; }//灰色
 
       .top-button {
-          top: 10px;
+          top: 100px;
       }
       .middle-button {
           /* calc()を使って計算 */
-          top: 108px; /* 上記の計算結果 */
+          top: 172px; /* 上記の計算結果 */
       }
 
       /* ★ 各ボタンの位置を設定 */
@@ -285,7 +288,7 @@
       
       /* ボタンを格納しているコンテナの位置調整 */
       .gm-style-mtc {
-          margin: 10px 0 0 10px !important;
+          margin: 100px 0 0 10px !important;
           /* 親要素の高さを自動にすることで、中のボタンが大きくなってもはみ出ないようにする */
           height: auto !important; 
       }
@@ -523,7 +526,6 @@
                   scaleControl: false,
                   gestureHandling: 'greedy',
                   disableDoubleClickZoom: true,
-                  // ★★★ ここからが追加・変更部分 ★★★
                   mapTypeControl: true, // MapTypeControlを有効にする
                   mapTypeControlOptions: {
                   // ドロップダウンではなく、横並びのボタンにする
@@ -533,7 +535,6 @@
                   // 表示するマップタイプを指定（これがないと地形なども表示される）
                   mapTypeIds: ['roadmap', 'satellite']
                   }
-                  // ★★★ 追加・変更部分ここまで ★★★
               });
 
              // グローバル変数に初期位置を保存
@@ -621,44 +622,6 @@
               }
           });
         // ★★★ 強制更新ボタンの要素を取得してイベントを追加 ここまで★★★
-
-        /*
-
-          // ★★★ ここからが追加するイベントリスナー ★★★
-          reloadButton.addEventListener('click', async () => {
-              if (!confirm('キャッシュをクリアして地図データを再読み込みしますか？\n（オフライン時の未送信データは保持されます）')) {
-                  return; // ユーザーがキャンセルしたら何もしない
-              }
-
-              // ユーザーに処理中であることを知らせる
-              const titleElement = document.getElementById('page-title');
-              titleElement.textContent = '更新中...';
-              reloadButton.disabled = true;
-              reloadButton.textContent = '更新中';
-
-              try {
-                  // 1. IndexedDBの地図データキャッシュをクリア
-                  await dbManager.clearCachedFeatures();
-                  console.log('Map data cache cleared.');
-
-                  // 2. ページをリロードして、最初からデータを読み直させる
-                  //    これにより、initializeMapAndFeatures が再度実行される
-                  window.location.reload();
-
-              } catch (error) {
-                  console.error('Failed to clear cache and reload:', error);
-                  alert('更新処理に失敗しました。');
-                  // 失敗した場合はUIを元に戻す
-                  titleElement.textContent = document.title; // 元のタイトルに戻す
-                  reloadButton.disabled = false;
-                  reloadButton.textContent = '強制更新';
-              }
-          });
-
-          */
-        
-          // ★★★ 追加部分ここまで ★★★
-          
           resetButton.addEventListener('click', () => {
               if (map && initialCenterPosition) {
                   map.panTo(initialCenterPosition);
@@ -696,12 +659,14 @@
                                     },
                                 title: "あなたの現在地"
                             });
+                            // ★★★ 修正: マーカーを初回作成する時だけ地図の中心を移動 ★★★
+                            map.panTo(pos);
                         } else {
                             currentLocationMarker.setPosition(pos);
                         }
                         
                         // 地図の中心をスムーズに移動
-                        map.panTo(pos);
+                        //map.panTo(pos);
                     },
                     // 失敗時のコールバック
                     () => { handleLocationError(true, map.getCenter()); }
@@ -1118,6 +1083,8 @@
 
                       // 1. まず、現在の状態を保存しておく（失敗時のロールバック用）
                       const oldStatus = room.status;
+                      const oldStatusAQ = room.statusAQ; // ★ 失敗時のロールバック用にAQも保存
+                      const oldStatusAS = room.statusAS; // ★ 失敗時のロールバック用にASも保存
 
                       // 2. 新しい状態を計算
                       const newStatus = button.dataset.status;
@@ -1129,10 +1096,19 @@
 
                       try {
                           // サーバー/ローカルDBへの更新処理を待つ
-                          await handleStatusUpdate(updateOptions);
+                          //await handleStatusUpdate(updateOptions);
+
+                          // ★★★【修正】サーバーからの戻り値を受け取る ★★★
+                          const newStatusData = await handleStatusUpdate(updateOptions);
 
                           // --- 成功時の処理 ---
                           room.status = valueToSet;
+
+                          // ★★★【追加】サーバーから返された新しいステータスをローカルデータに反映 ★★★
+                          if (newStatusData) {
+                              room.statusAQ = newStatusData.newStatusAQ;
+                              room.statusAS = newStatusData.newStatusAS;
+                          }
                           updateRoomListAppearance(apartmentData);
 
                       } catch(error) {
@@ -1141,6 +1117,8 @@
                           alert(error.message || 'データの更新に失敗しました。');
                           // 状態を元に戻してUIを再描画
                           room.status = oldStatus;
+                          room.statusAQ = oldStatusAQ;
+                          room.statusAS = oldStatusAS;
                           updateRoomListAppearance(apartmentData);
 
                       } finally {
@@ -1164,6 +1142,27 @@
 
           sheetContent.querySelectorAll('.room-item').forEach((item, index) => {
               const room = apartmentData.rooms[index];
+
+              // --- 1. 背景色を更新するロジック ---
+              let statusClass = '';
+              if (room.statusAQ === '拒否') {
+                  statusClass = 'status-refused';
+              } else if (room.statusAQ === '長期') {
+                  statusClass = 'status-long-term-aq';
+              } else if (room.statusAQ === '空') {
+                  statusClass = 'status-vacant';
+              } else if (room.statusAS === '長期') {
+                  statusClass = 'status-long-term-as';
+              }
+
+              // 既存のステータスクラスを一旦すべて削除
+              item.classList.remove('status-refused', 'status-long-term-aq', 'status-vacant', 'status-long-term-as');
+              
+              // 新しいステータスクラスがあれば追加
+              if (statusClass) {
+                  item.classList.add(statusClass);
+              }
+            
               const buttons = item.querySelectorAll('.room-item-actions button');
               buttons.forEach(button => {
                   if (button.dataset.status === room.status) {
@@ -1291,6 +1290,7 @@
     </script>
   </body>
 </html>
+
 
 
 
