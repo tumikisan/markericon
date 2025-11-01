@@ -49,11 +49,11 @@
       .topp-button {
           top: 100px;
       }
-      */
       
       .middle-button {
           top: 200px;
       }
+      */
 
       /* ★ 各ボタンの位置を設定 */
       #reset-center-button {
@@ -61,11 +61,11 @@
             right: 10px;
         }
         #start-tracking-button {
-           
+            top: 172px;
             right: 10px;
         }
         #stop-tracking-button {
-            
+            top: 172px;
             right: 10px;
             display: none;
         }
@@ -353,8 +353,8 @@
   <body>
     <h1 id="page-title">Loading...</h1>
     <button id="reset-center-button" class="map-button">初期位置に戻る</button>
-    <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
-    <button id="stop-tracking-button" class="map-button middle-button" style="display: none;">現在地非表示</button>
+    <button id="start-tracking-button" class="map-button">現在地表示</button>
+    <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
     <button id="force-reload-button" class="map-button bottom-left-button">強制更新</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
@@ -1291,6 +1291,7 @@
     </script>
   </body>
 </html>
+
 
 
 
