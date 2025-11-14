@@ -5,13 +5,20 @@
     <style>
       /* ページの余白をなくし、地図を全画面表示にするためのスタイル */
       /* index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2） */
+
+      *, *::before, *::after {
+        box-sizing: border-box; /* すべての要素で直感的なサイズ計算を可能にする */
+      }
+      
       html, body {
         height: 100%;
         margin: 0;
         padding: 0;
+        font-family: 'Roboto', sans-serif; /* 全体の基本フォントを指定 */
       }
       #map {
         height: 100%;
+        z-index: 1;
       }
 
       /* index.html の <style> タグ内 */
@@ -22,54 +29,73 @@
           width: 100%; /* 幅を画面いっぱいに */
           z-index: 5;
           background-color: rgba(255, 255, 255, 0.85);
-          padding: 16px 0; /* 上下の余白を調整 */
+          padding: 16px 24px; /* 左右にも余白を持たせる */
           font-size: 48px; /* フォントサイズを大きく */
-          font-weight: bold;
-          text-align: center; /* テキストを中央揃え */
-          box-sizing: border-box; /* paddingを含めて幅100%にする */
           margin: 0;
           box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 境界を明確にするための影 */
+          display: flex;          /* Flexboxを有効化 */
+          flex-direction: column; /* 要素を縦に並べる */
+        　gap: 8px; /* 要素間の余白 */
       }
 
-      .topp-button {
-          top: 105px;
+      /* メインタイトルのスタイル */
+      .main-title {
+          font-size: 48px;
+          font-weight: bold;
+          text-align: center;     /* タイトルは中央揃え */
       }
       
-      .middle-button {
-          top: 200px;
+      /* 補足情報のスタイル */
+      .title-info {
+          width: 100%;            /* 親要素の幅いっぱいに広げる */
+          text-align: right;      /* その中でテキストを右揃えにする */
+          font-size: 48px;        /* 補足情報なのでフォントサイズを調整 */
+          font-weight: normal;    /* 太字を解除 */
+      }
+
+      /* === マップ上のカスタムボタン === */
+
+      /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
+      .map-controls-right {
+        position: absolute;
+        top: 150px; /* page-titleの高さに応じて調整 */
+        right: 10px;
+        z-index: 5;
+        display: flex;
+        flex-direction: column; /* ボタンを縦に並べる */
+        gap: 10px;           /* ボタン間の余白をまとめて指定 */
       }
 
       .map-button {
-            right: 10px;
-            position: absolute;
-            z-index: 5;
-            background-color: #fff;
-            padding: 8px;
-            border: 2px solid #fff;
-            border-radius: 3px;
-            box-shadow: 0 2px 6px rgba(0,0,0,.3);
-            cursor: pointer;
-            font-family: Roboto, sans-serif;
-            font-size: 42px;
-            text-align: center;
+        background-color: #fff;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 3px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3);
+        cursor: pointer;
+        font-size: 20px;
+        text-align: center;
+        transition: background-color 0.2s;
       }
-      .map-button:hover { background-color: #f4f4f4; }//灰色
-      
-      
-      
+      .map-button:hover {
+        background-color: #f4f4f4; /* 灰色 */
+      }
 
+      /* ★ 左下のボタンの位置（改善点） */
+      .bottom-left-button {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+      }
+
+      /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
+      body.no-sub-info .map-controls-right {
+        top: 100px; /* 補足情報がない分、上に詰める */
+      }
+      
+      
       /* ★ 各ボタンの位置を設定 */
-      #reset-center-button {
-           
-            
-        }
-        #start-tracking-button {
-            
-            
-        }
-        #stop-tracking-button {
-           
-            
+        #stop-tracking-button {  
             display: none;
         }
 
@@ -310,7 +336,7 @@
           
           /* ★★★ 文字のスタイルを最優先で指定 ★★★ */
           font-family: Roboto, sans-serif !important;
-          font-size: 42px !important; /* ★フォントサイズを強制指定 */
+          font-size: 48px !important; /* ★フォントサイズを強制指定 */
           font-weight: 500 !important;
           color: #222 !important;
           line-height: 1.2 !important; /* 行の高さを調整 */
@@ -350,15 +376,22 @@
           left: 10px;
           right: 750px;
       }
-      
+     
 
     </style>
   </head>
   <body>
-    <h1 id="page-title">Loading...</h1>
-    <button id="reset-center-button" class="map-button topp-button">初期位置に戻る</button>
-    <button id="start-tracking-button" class="map-button middle-button">現在地表示</button>
+    <div id="page-title">
+    <span class="main-title">ページのタイトル</span>
+    <span class="title-info">ここに補足情報が入ります</span>
+  　</div>
+
+    <div class="map-controls-right">
+    <button id="reset-center-button" class="map-button">初期位置に戻る</button>
+    <button id="start-tracking-button" class="map-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
+  　</div>
+    
     <button id="force-reload-button" class="map-button bottom-left-button">強制更新</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
@@ -508,14 +541,34 @@
 
         // ★★★ ここからがタイトル設定の処理 ★★★
         const pageTitle = data.title || "地図"; // data.titleがなければデフォルト値
+        const subInfoText = data.subInfo || ""; // サーバーから補足情報を取得
 
         // 1. ブラウザのタブのタイトルを変更
         document.title = pageTitle;
         
-        // 2. ページ上のh1要素のテキストを変更 (h1要素を追加した場合)
-        const titleElement = document.getElementById('page-title');
-        if (titleElement) {
-            titleElement.textContent = pageTitle;
+        // 2. ページ上のタイトルと補足情報を設定
+        const mainTitleElement = document.querySelector('#page-title .main-title');
+        const subInfoElement = document.querySelector('#page-title .title-info');
+
+        // メインタイトルの設定
+        if (mainTitleElement) {
+            mainTitleElement.textContent = pageTitle;
+        }
+
+         // 補足情報の設定と表示制御
+        if (subInfoElement) {
+            // trim()で空白文字のみの場合も「情報なし」と判定
+            if (subInfoText && subInfoText.trim() !== "") {
+                // 補足情報がある場合
+                subInfoElement.textContent = subInfoText;
+                subInfoElement.style.display = 'block'; // 表示
+                document.body.classList.remove('no-sub-info'); // bodyのクラスを削除
+            } else {
+                // 補足情報がない場合
+                subInfoElement.textContent = '';
+                subInfoElement.style.display = 'none'; // 非表示
+                document.body.classList.add('no-sub-info'); // bodyに目印のクラスを追加
+            }
         }
         // ★★★ タイトル設定ここまで ★★★
 
@@ -1295,6 +1348,7 @@
     </script>
   </body>
 </html>
+
 
 
 
