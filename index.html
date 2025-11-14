@@ -58,7 +58,7 @@
       /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
       .map-controls-right {
         position: absolute;
-        top: 150px; /* page-titleの高さに応じて調整 */
+        top: 160px; /* page-titleの高さに応じて調整 */
         right: 10px;
         z-index: 5;
         display: flex;
@@ -73,7 +73,7 @@
         border-radius: 3px;
         box-shadow: 0 2px 6px rgba(0,0,0,.3);
         cursor: pointer;
-        font-size: 20px;
+        font-size: 48px;
         text-align: center;
         transition: background-color 0.2s;
       }
@@ -86,6 +86,15 @@
         position: absolute;
         bottom: 10px;
         left: 10px;
+        background-color: #fff;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 3px;
+        box-shadow: 0 2px 6px rgba(0,0,0,.3);
+        cursor: pointer;
+        font-size: 48px;
+        text-align: center;
+        transition: background-color 0.2s;
       }
 
       /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
@@ -371,11 +380,7 @@
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
 
-      .bottom-left-button {
-          bottom: 10px;
-          left: 10px;
-          right: 750px;
-      }
+      
      
 
     </style>
@@ -392,7 +397,7 @@
     <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
   　</div>
     
-    <button id="force-reload-button" class="map-button bottom-left-button">強制更新</button>
+    <button id="force-reload-button" class="bottom-left-button">強制更新</button>
     <!-- 地図を表示するための div 要素 -->
     <div id="map"></div>
 
@@ -1348,6 +1353,7 @@
     </script>
   </body>
 </html>
+
 
 
 
