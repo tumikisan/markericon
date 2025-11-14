@@ -99,7 +99,7 @@
       }
 
       /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
-      body.no-sub-info .map-controls-right .bottom-left-button {
+      body.no-sub-info .map-controls-right {
         top: 100px; /* 補足情報がない分、上に詰める */
       }
       
@@ -377,6 +377,11 @@
       /* ホバー時のスタイル */
       .gm-style-mtc button:not([aria-pressed="true"]):hover {
           background-color: #f4f4f4 !important; 
+      }
+
+       /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
+      body.no-sub-info .gm-style-mtc {
+        margin: 100px 0 0 10px !important;
       }
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
@@ -1354,6 +1359,7 @@
     </script>
   </body>
 </html>
+
 
 
 
