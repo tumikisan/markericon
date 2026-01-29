@@ -855,7 +855,11 @@
 
         // ★★★ ここの判定ロジックを修正 ★★★
         let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
-        let textContent = markerData.name || "?";
+        //let textContent = markerData.name || "?";
+
+        let rawName = markerData.name || "?";
+        // ★【追加】読点「、」やスペースを削除する（「㊿、」→「㊿」、「51」→「51」になる）
+        let textContent = rawName.replace(/[、\s]/g, '');
 
         if (statusAQ === '長期') {
             backgroundColor = "#FFC107"; // 黄色 (Bootstrapのwarning色)
@@ -1370,6 +1374,7 @@
     </script>
   </body>
 </html>
+
 
 
 
