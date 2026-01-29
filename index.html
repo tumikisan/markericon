@@ -870,8 +870,19 @@
 
          // ★★★ innerHTMLの生成を一度で行う ★★★
         //マーカーの使用文字
+        //markerDiv.innerHTML = `
+          //<div class="overlay marker-text">${textContent.substring(0, 1)}</div>
+
+        
+          // ★★★ 文字数に応じてフォントサイズを調整する ★★★
+        // 1文字なら元の72px、2文字以上（51など）なら52pxに縮小し、文字間を少し詰める
+        const fontSizeStyle = textContent.length > 1 ? 'font-size: 52px; letter-spacing: -3px;' : '';
+
+         // ★★★ innerHTMLの生成を一度で行う ★★★
+        //マーカーの使用文字
         markerDiv.innerHTML = `
-          <div class="overlay marker-text">${textContent.substring(0, 1)}</div>
+          <!-- substring(0, 1) を削除し、style属性を追加 -->
+          <div class="overlay marker-text" style="${fontSizeStyle}">${textContent}</div>
           <div class="overlay checkmark-overlay">✓</div>
           <div class="overlay p-overlay">P</div>
           <div class="spinner"></div>
@@ -1359,6 +1370,7 @@
     </script>
   </body>
 </html>
+
 
 
 
