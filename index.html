@@ -996,10 +996,10 @@
 
         const polygon = new google.maps.Polygon({
             paths: path,
-            strokeColor: "#000000",
+            strokeColor: "#000000",// 塗りつぶしの色（現在は黒。赤なら #FF0000、青なら #0000FF）
             strokeOpacity: 1.0,
             strokeWeight: 2,
-            fillOpacity: 0.0, // 塗りつぶしなし
+            fillOpacity: 0.35, // 塗りつぶしなし
             map: map,
             clickable: false,
         });
@@ -1374,6 +1374,7 @@
     </script>
   </body>
 </html>
+
 
 
 
