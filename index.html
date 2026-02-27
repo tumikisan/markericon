@@ -1510,8 +1510,13 @@
                             ref.data.statusAQ = item.newStatusAQ;
                             ref.data.statusAS = item.newStatusAS;
                             
-                            // 2. マーカーの色(見た目)を更新する関数を実行
-                            ref.updateColor(ref.div, item.newStatusAQ, item.newStatusAS);
+                            // 2. 種類に応じた更新処理
+                            // ★ ここで「updateColor関数が存在する場合のみ」実行するように修正
+                            if (ref.type === 'marker' && typeof ref.updateColor === 'function') {
+                                // 通常マーカーなら地図上の色を塗り替え
+                                ref.updateColor(ref.div, item.newStatusAQ, item.newStatusAS);
+                            } 
+                            // 部屋(room)の場合はここでは何もしない
                         }
                     });
 
@@ -1616,6 +1621,7 @@
     </script>
   </body>
 </html>
+
 
 
 
