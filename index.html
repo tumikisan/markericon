@@ -994,6 +994,39 @@
             return { lat: parseFloat(coords[1]), lng: parseFloat(coords[0]) };
         });
 
+        // ★★★ ここから：B7とB8を区別してスタイルを決める処理 ★★★
+        
+        let polyOptions = {};
+
+        if (polygonData.name === 'Boundary') {
+            // ■ ケース1: B7セルのデータ (Boundary)
+            // 外枠なので塗りつぶさず、線を太く、黒くする
+            polyOptions = {
+                paths: path,
+                strokeColor: "#000000", // 黒
+                strokeOpacity: 1.0,
+                strokeWeight: 4,        // ★線を太くして強調
+                fillOpacity: 0.0,       // ★塗りつぶしなし（透明）
+                clickable: false,
+                map: map
+            };
+        } else {
+            // ■ ケース2: B8セルのデータ (その他)
+            // 区域なので塗りつぶす（例: 薄い青色）
+            polyOptions = {
+                paths: path,
+                strokeColor: "#0000FF", // 線の色（青）
+                strokeOpacity: 0.8,
+                strokeWeight: 2,        // 通常の太さ
+                fillColor: "#000000",   // ★塗りつぶしの色（黒）
+                fillOpacity: 0.4,       // ★20%の濃さで塗りつぶし
+                clickable: false,
+                map: map
+            };
+          // 設定したオプションでポリゴンを作成
+        const polygon = new google.maps.Polygon(polyOptions);
+       /* 
+
         const polygon = new google.maps.Polygon({
             paths: path,
             strokeColor: "#000000",// 塗りつぶしの色（現在は黒。赤なら #FF0000、青なら #0000FF）
@@ -1003,6 +1036,7 @@
             map: map,
             clickable: false,
         });
+        */
       }
 
       function drawLinestring(linestringData) {
@@ -1374,6 +1408,7 @@
     </script>
   </body>
 </html>
+
 
 
 
