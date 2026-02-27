@@ -470,6 +470,9 @@
       let watchId = null; // watchPositionのIDを保存する
       let currentLocationMarker = null; // 現在地マーカーを保存する
       let infoWindow = null;
+      
+      // ★★★ 追加: マーカーを管理するためのオブジェクト ★★★
+      let markerRefs = {}; 
 
       // index.html の <script> タグのグローバルスコープ
 
@@ -872,6 +875,9 @@
      // ★★★ 修正点2: drawFeatures は features 配列を直接受け取るように変更 ★★★
       function drawFeatures(features) { // 引数名を 'features' に変更して分かりやすく
         // 'data.error' のチェックは initializeMapAndFeatures で済んでいるので不要
+
+         // ★★★ 追加: 描画のたびにリセットする ★★★
+        markerRefs = {}; 
         
         // features が配列であり、中身があるかチェック
         if (!features || features.length === 0) {
@@ -992,6 +998,14 @@
 
         // ★★★ JSで表示/非表示を明確に制御 ★★★
         textOverlay.style.display = 'flex'; // ベースの文字は常に表示
+
+        // ★★★ ここに追加: マーカーを行番号で検索できるように登録しておく ★★★
+        markerRefs[markerData.rowNumber] = {
+            div: markerDiv,           // 色を変えるためのDOM要素
+            data: markerData,         // 内部データ (statusAQなどを更新するため)
+            updateColor: updateMarkerColor // 色を変える関数
+        };
+        // ★★★ 追加ここまで ★★★
         
         // ヘルパー関数を呼び出す
         const marker = createAdvancedMarker(markerData, markerDiv);
@@ -1463,7 +1477,29 @@
             const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
 
             try {
-                await serverRequest('batchUpdateStatuses', { updates: updates });
+                // ★★★ 修正: サーバーからの戻り値 (resultData) を受け取る ★★★
+                const resultData = await serverRequest('batchUpdateStatuses', { updates: updates });
+                
+                // ★★★ 追加: 戻り値を使ってマーカーの色を一括更新 ★★★
+                if (resultData && Array.isArray(resultData)) {
+                    console.log("サーバーからの最新情報でマーカーを更新します:", resultData);
+                    
+                    resultData.forEach(item => {
+                        // 行番号(row)を使ってマーカー情報を取得
+                        const ref = markerRefs[item.row];
+                        if (ref) {
+                            // 1. 内部データを最新にする
+                            ref.data.statusAQ = item.newStatusAQ;
+                            ref.data.statusAS = item.newStatusAS;
+                            
+                            // 2. マーカーの色(見た目)を更新する関数を実行
+                            ref.updateColor(ref.div, item.newStatusAQ, item.newStatusAS);
+                        }
+                    });
+                }
+                // ★★★ 追加ここまで ★★★
+              
+                //await serverRequest('batchUpdateStatuses', { updates: updates });
                 await dbManager.clearQueue();
                 console.log("Sync successful!");
             } catch (error) {
@@ -1557,6 +1593,7 @@
     </script>
   </body>
 </html>
+
 
 
 
