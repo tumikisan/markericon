@@ -386,6 +386,40 @@
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
 
+      /* --- 通信ステータス通知バーのスタイル --- */
+      .connection-status {
+          position: fixed;
+          top: 0; /* 画面最上部 */
+          left: 0;
+          width: 100%;
+          padding: 12px;
+          text-align: center;
+          font-size: 32px; /* スマホで見やすいサイズ */
+          font-weight: bold;
+          color: white;
+          z-index: 9999; /* 最前面に表示 */
+          transition: transform 0.3s ease-in-out;
+      }
+      
+      /* オフライン時: 赤 */
+      .status-offline {
+          background-color: #dc3545; /* 赤 */
+          display: block !important;
+      }
+      
+      /* 同期中: 黄色 (文字は黒) */
+      .status-syncing {
+          background-color: #ffc107; /* 黄 */
+          color: #000;
+          display: block !important;
+      }
+      
+      /* 完了: 緑 */
+      .status-online {
+          background-color: #28a745; /* 緑 */
+          display: block !important;
+      }
+
       
      
 
@@ -396,6 +430,7 @@
     <span class="main-title">ページのタイトル</span>
     <span class="title-info">ここに補足情報が入ります</span>
     </div>
+    <div id="connection-status" class="connection-status" style="display: none;"></div>
 
     <div class="map-controls-right">
     <button id="reset-center-button" class="map-button">初期位置に戻る</button>
@@ -481,6 +516,34 @@
 
         initializeMapAndFeatures(); // 直接初期化処理を開始
       } 
+
+      // ★ 通信ステータスを表示する関数
+      function updateNetworkStatusUI(state) {
+          const statusDiv = document.getElementById('connection-status');
+          
+          // クラスをリセット
+          statusDiv.className = 'connection-status';
+          statusDiv.style.display = 'none';
+
+          if (state === 'offline') {
+              statusDiv.textContent = '⚠ オフライン: 変更は一時保存されます';
+              statusDiv.classList.add('status-offline');
+              statusDiv.style.display = 'block';
+          } else if (state === 'syncing') {
+              statusDiv.textContent = '↻ オンライン復帰: スプレッドシートと同期中...';
+              statusDiv.classList.add('status-syncing');
+              statusDiv.style.display = 'block';
+          } else if (state === 'synced') {
+              statusDiv.textContent = '✔ 同期完了: データは最新です';
+              statusDiv.classList.add('status-online');
+              statusDiv.style.display = 'block';
+              
+              // 3秒後に非表示にする
+              setTimeout(() => {
+                  statusDiv.style.display = 'none';
+              }, 3000);
+          }
+      }
 
       // [2] アプリの起動シーケンスを管理
       async function initializeMapAndFeatures() {
@@ -762,6 +825,35 @@
           closeSheetButton.addEventListener('click', () => {
               bottomSheet.classList.remove('is-visible');
           });
+
+        // ★★★ ここから追加: オンライン/オフラインの監視 ★★★
+          
+          // オフラインになった時
+          window.addEventListener('offline', () => {
+              updateNetworkStatusUI('offline');
+          });
+
+          // オンラインに復帰した時
+          window.addEventListener('online', async () => {
+              // 1. まず「同期中」を表示
+              updateNetworkStatusUI('syncing');
+              
+              // 2. 溜まっていたデータを送信
+              try {
+                  await syncLocalDataWithServer();
+                  // 3. 成功したら「完了」を表示
+                  updateNetworkStatusUI('synced');
+              } catch (e) {
+                  console.error("同期失敗:", e);
+                  // 失敗した場合はエラー表示などはせず、オフライン表示に戻すか静かに終了
+                  // (次回の接続時に再トライされるため)
+              }
+          });
+
+          // ★ アプリ起動時の初期チェック
+          if (!navigator.onLine) {
+              updateNetworkStatusUI('offline');
+          }
       }
       
       // エラー処理用の関数
@@ -1361,9 +1453,11 @@
 
           if (!queue || !Array.isArray(queue) || queue.length === 0) {
               // !Array.isArray(queue) を追加して、配列でない場合はここで弾く
-              console.log("同期するデータは配列ではない、または空です。");
+              console.log("同期する未送信データはありません。");
               return;
           }
+
+          console.log(`未送信データ ${queue.length} 件を同期開始...`);
         
             if (!queue || queue.length === 0) return;
             const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
@@ -1374,6 +1468,7 @@
                 console.log("Sync successful!");
             } catch (error) {
                 console.error("Sync failed:", error.message);
+                throw error; // エラーを上に投げて、UI側で検知できるようにする
             }
         }
 
@@ -1462,6 +1557,7 @@
     </script>
   </body>
 </html>
+
 
 
 
