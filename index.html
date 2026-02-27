@@ -473,6 +473,8 @@
       
       // ★★★ 追加: マーカーを管理するためのオブジェクト ★★★
       let markerRefs = {}; 
+      // ★★★ 追加: 現在ボトムシートで表示中のアパートデータを保持する変数 ★★★
+      let currentApartment = null;
 
       // index.html の <script> タグのグローバルスコープ
 
@@ -827,6 +829,8 @@
 
           closeSheetButton.addEventListener('click', () => {
               bottomSheet.classList.remove('is-visible');
+              // ★★★ 追加: 閉じる時にクリア ★★★
+              currentApartment = null;
           });
 
         // ★★★ ここから追加: オンライン/オフラインの監視 ★★★
@@ -889,6 +893,17 @@
         features.forEach(item => {
             if (item.type === 'apartment') {
                 placeApartmentMarker(item);
+                // ★★★ 追加: アパートの各部屋も行番号で検索できるように登録 ★★★
+                if (item.rooms) {
+                    item.rooms.forEach(room => {
+                        markerRefs[room.row] = {
+                            type: 'room',       // 部屋であることを示す
+                            data: room,         // 部屋のデータ
+                            apartment: item     // 親のアパートデータ
+                        };
+                    });
+                }
+                // ★★★ 追加ここまで ★★★
             } else if (item.type === 'autolock') {
                 placeAutolockMarker(item);
             } else if (item.type === 'marker') {
@@ -1001,6 +1016,7 @@
 
         // ★★★ ここに追加: マーカーを行番号で検索できるように登録しておく ★★★
         markerRefs[markerData.rowNumber] = {
+            type: 'marker',           // ★追加
             div: markerDiv,           // 色を変えるためのDOM要素
             data: markerData,         // 内部データ (statusAQなどを更新するため)
             updateColor: updateMarkerColor // 色を変える関数
@@ -1314,6 +1330,8 @@
 
       // ★★★ ボトムシートを表示・制御する新しい関数 ★★★
       function showBottomSheet(apartmentData) {
+          // ★★★ 追加: 現在表示中のアパートを記録 ★★★
+          currentApartment = apartmentData;
           // 1. タイトルを設定
           sheetTitle.textContent = apartmentData.name;
           
@@ -1496,6 +1514,11 @@
                             ref.updateColor(ref.div, item.newStatusAQ, item.newStatusAS);
                         }
                     });
+
+                    // ★★★ 追加: ボトムシートが開いていればリストの見た目を更新 ★★★
+                    if (currentApartment) {
+                        updateRoomListAppearance(currentApartment);
+                    }
                 }
                 // ★★★ 追加ここまで ★★★
               
@@ -1593,6 +1616,7 @@
     </script>
   </body>
 </html>
+
 
 
 
