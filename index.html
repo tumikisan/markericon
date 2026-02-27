@@ -995,36 +995,85 @@
         });
 
         // ★★★ ここから：B7とB8を区別してスタイルを決める処理 ★★★
+         // ---------------------------------------------------------
+        // ★★★ 簡易計算ロジック（平面近似） ★★★
         
+        let area = 0;
+        let perimeter = 0;
+
+        if (path.length > 2) {
+            // 緯度1度あたりの距離を約111,000mと仮定
+            // 経度方向は緯度に合わせて補正（cos(緯度) * 111,000）
+            const latRad = path[0].lat * (Math.PI / 180);
+            const metersPerLat = 111000; 
+            const metersPerLng = Math.cos(latRad) * 111000;
+
+            for (let i = 0; i < path.length; i++) {
+                const p1 = path[i];
+                const p2 = path[(i + 1) % path.length]; // 次の点（最後なら最初に戻る）
+
+                // 1. 周囲長の計算（三平方の定理）
+                const dx = (p2.lng - p1.lng) * metersPerLng;
+                const dy = (p2.lat - p1.lat) * metersPerLat;
+                perimeter += Math.sqrt(dx * dx + dy * dy);
+
+                // 2. 面積の計算（靴紐の公式の簡易版）
+                // 座標をメートル単位とみなして計算
+                const x1 = p1.lng * metersPerLng;
+                const y1 = p1.lat * metersPerLat;
+                const x2 = p2.lng * metersPerLng;
+                const y2 = p2.lat * metersPerLat;
+                area += (x1 * y2 - x2 * y1);
+            }
+            area = Math.abs(area) / 2;
+        }
+        
+        // ---------------------------------------------------------
+
         let polyOptions = {};
 
+        // B7（外枠）かどうかの判定
         if (polygonData.name === 'Boundary') {
-            // ■ ケース1: B7セルのデータ (Boundary)
-            // 外枠なので塗りつぶさず、線を太く、黒くする
             polyOptions = {
                 paths: path,
-                strokeColor: "#000000", // 黒
+                strokeColor: "#000000",
                 strokeOpacity: 1.0,
-                strokeWeight: 4,        // ★線を太くして強調
-                fillOpacity: 0.0,       // ★塗りつぶしなし（透明）
+                strokeWeight: 4,
+                fillOpacity: 0.0,
                 clickable: false,
                 map: map
             };
         } else {
-            // ■ ケース2: B8セルのデータ (その他)
-            // 区域なので塗りつぶす（例: 薄い青色）
-            polyOptions = {
-                paths: path,
-                strokeColor: "#000000", // 線の色（黒）
-                strokeOpacity: 0.8,
-                strokeWeight: 2,        // 通常の太さ
-                fillColor: "#000000",   // ★塗りつぶしの色（黒）
-                fillOpacity: 0.5,       // ★20%の濃さで塗りつぶし
-                clickable: false,
-                map: map
-            };
+            // B8（区域）の場合のスタイル分け
+            // 判定基準: 面積1000㎡(0.1ha)以上 または 周囲長100m以上
+            
+            // ★条件を満たす場合（大きい区域）
+            if (area >= 1000 || perimeter >= 100) {
+                polyOptions = {
+                    paths: path,
+                    strokeColor: "#FFFFFF", // 白枠
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: "#FFFFFF",   // 白塗り
+                    fillOpacity: 0.35,      // 少し透過
+                    clickable: false,
+                    map: map
+                };
+            } else {
+                // ★条件を満たさない場合（小さい区域）
+                polyOptions = {
+                    paths: path,
+                    strokeColor: "#000000", // 枠
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: "#000000",   // 塗り
+                    fillOpacity: 0.4,
+                    clickable: false,
+                    map: map
+                };
+            }
         }
-          // 設定したオプションでポリゴンを作成
+
         const polygon = new google.maps.Polygon(polyOptions);
        /* 
 
@@ -1409,6 +1458,7 @@
     </script>
   </body>
 </html>
+
 
 
 
