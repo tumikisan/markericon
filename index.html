@@ -35,7 +35,7 @@
           box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 境界を明確にするための影 */
           display: flex;          /* Flexboxを有効化 */
           flex-direction: column; /* 要素を縦に並べる */
-        　gap: 4px; /* 要素間の余白 */
+	  gap: 4px; /* 要素間の余白 */
       }
 
       /* メインタイトルのスタイル */
@@ -460,7 +460,11 @@
 
       // ★ テンプレート構文でGASからIDを受け取る
       const params = new URLSearchParams(window.location.search);
-    　const SPREADSHEET_ID = params.get('id'); // URLの'?id=...'の値を取得
+    　const idParam = params.get('id'); // カンマ区切りの文字列
+      const SPREADSHEET_IDS = idParam ? idParam.split(',') : [];
+      const filterParam = params.get('filter'); // "long" など
+      // キャッシュキーをフィルタ状態によって分ける
+      const CACHE_KEY = filterParam === 'long' ? 'main_long' : 'main';
       const WEB_APP_URL = "__PLACEHOLDER_WEB_APP_URL__";
       const SECRET_TOKEN = "__PLACEHOLDER_SECRET_TOKEN__";
       const YOUR_API_KEY = "__PLACEHOLDER_YOUR_API_KEY__";
@@ -514,7 +518,7 @@
 
       function initMap() {
         // IDがURLで指定されていない場合のガード処理
-        if (!SPREADSHEET_ID) {
+        if (SPREADSHEET_IDS.length === 0) {
             document.body.innerHTML = "<h1>エラー: 表示するスプレッドシートが指定されていません。</h1><p>URLの末尾に ?id=... を付けてください。</p>";
             return;
         }
@@ -557,7 +561,7 @@
             // Service WorkerとdbManagerの両方が利用可能な場合のみ実行
                 Promise.all([
                     dbManager.setConfig('webAppUrl', WEB_APP_URL),
-                    dbManager.setConfig('spreadsheetId', SPREADSHEET_ID),
+                    dbManager.setConfig('spreadsheetId', JSON.stringify(SPREADSHEET_IDS)), // 文字列化して保存
                     dbManager.setConfig('secretToken', SECRET_TOKEN)
                 ]).then(() => {
                     console.log('Configuration saved to IndexedDB for Service Worker.');
@@ -584,7 +588,7 @@
                 features = data.features;
 
               // 取得したデータをキャッシュ
-                await dbManager.cacheFeatures({ features: features, initialCenter: centerPosition });
+                await dbManager.cacheFeatures(CACHE_KEY, { features: features, initialCenter: centerPosition });
                 console.log("Data cached to IndexedDB.");
 
                 // 溜まっていたキューを同期
@@ -593,7 +597,7 @@
               } catch (serverError) {
                 console.error("Server fetch failed, falling back to cache:", serverError.message);
                 // サーバーがエラーでも、キャッシュがあればフォールバック
-                const cachedData = await dbManager.getCachedFeatures();
+                const cachedData = await dbManager.getCachedFeatures(CACHE_KEY);
                 if (cachedData) {
                     features = cachedData.features;
                     centerPosition = cachedData.initialCenter; // キャッシュからも中心地を読み込む
@@ -602,7 +606,7 @@
         } else {
             // オフラインならキャッシュから読み込む
             console.log("Offline: Loading data from cache...");
-            const cachedData = await dbManager.getCachedFeatures();
+            const cachedData = await dbManager.getCachedFeatures(CACHE_KEY);
             if (cachedData) {
                 features = cachedData.features;
                 centerPosition = cachedData.initialCenter;
@@ -896,7 +900,7 @@
                 // ★★★ 追加: アパートの各部屋も行番号で検索できるように登録 ★★★
                 if (item.rooms) {
                     item.rooms.forEach(room => {
-                        markerRefs[room.row] = {
+                        markerRefs[`${item.spreadsheetId}_${room.row}`] = {
                             type: 'room',       // 部屋であることを示す
                             data: room,         // 部屋のデータ
                             apartment: item     // 親のアパートデータ
@@ -1015,7 +1019,7 @@
         textOverlay.style.display = 'flex'; // ベースの文字は常に表示
 
         // ★★★ ここに追加: マーカーを行番号で検索できるように登録しておく ★★★
-        markerRefs[markerData.rowNumber] = {
+        markerRefs[`${markerData.spreadsheetId}_${markerData.rowNumber}`] = {
             type: 'marker',           // ★追加
             div: markerDiv,           // 色を変えるためのDOM要素
             data: markerData,         // 内部データ (statusAQなどを更新するため)
@@ -1054,7 +1058,12 @@
             // 状態を次の段階に進める (0 -> 1 -> 2 -> 0)
             const nextState = (currentState + 1) % 3;
             const valueToSet = STATUS_VALUES[nextState];
-            const updateOptions = { rowNumber: markerData.rowNumber, valueToSet: valueToSet };
+            const updateOptions = { 
+                queueId: `${markerData.spreadsheetId}_${markerData.rowNumber}`, 
+                spreadsheetId: markerData.spreadsheetId,
+                rowNumber: markerData.rowNumber, 
+                valueToSet: valueToSet 
+            };
 
             // --- UIを「更新中」状態にする ---
             markerDiv.classList.add('is-updating');
@@ -1385,7 +1394,12 @@
                       // 2. 新しい状態を計算
                       const newStatus = button.dataset.status;
                       const valueToSet = (oldStatus === newStatus) ? "" : newStatus;
-                      const updateOptions = { rowNumber: room.row, valueToSet: valueToSet };
+                      const updateOptions = { 
+                          queueId: `${apartmentData.spreadsheetId}_${room.row}`, 
+                          spreadsheetId: apartmentData.spreadsheetId,
+                          rowNumber: room.row, 
+                          valueToSet: valueToSet 
+                      };
                       
                       // --- UIを「更新中」状態にする ---
                       allButtons.forEach(b => b.disabled = true);
@@ -1504,7 +1518,7 @@
                     
                     resultData.forEach(item => {
                         // 行番号(row)を使ってマーカー情報を取得
-                        const ref = markerRefs[item.row];
+                        const ref = markerRefs[`${item.spreadsheetId}_${item.row}`];
                         if (ref) {
                             // 1. 内部データを最新にする
                             ref.data.statusAQ = item.newStatusAQ;
@@ -1548,7 +1562,8 @@
               body: JSON.stringify({
                   action,
                   token: SECRET_TOKEN,
-                  spreadsheetId: SPREADSHEET_ID, // ★ spreadsheetIdもここで渡す
+                  spreadsheetIds: SPREADSHEET_IDS, // ★ 配列を渡す
+                  filter: filterParam,             // ★ フィルター条件を渡す
                   ...payload
               })
           });
@@ -1567,7 +1582,11 @@
          // オンラインの場合、直接サーバーにリクエストして完了を待つ
         if (navigator.onLine) {
             try {
-                const updates = [{ row: updateOptions.rowNumber, status: updateOptions.valueToSet }];
+                const updates = [{ 
+                    spreadsheetId: updateOptions.spreadsheetId, // ★ 追加
+                    row: updateOptions.rowNumber, 
+                    status: updateOptions.valueToSet 
+                }];
                 // ★サーバーからの戻り値を受け取る
                 const resultData = await serverRequest('batchUpdateStatuses', { updates: updates });
                 console.log("Online update successful. Server response:", resultData);
@@ -1621,40 +1640,5 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
