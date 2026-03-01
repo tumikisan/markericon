@@ -1,147 +1,8 @@
-
-  const dbManager = (() => {
-
-      const DB_NAME = 'map-app-db';
-      const DB_VERSION = 6;
-      const UPDATE_STORE_NAME = 'updateQueue';
-      const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
-      const FEATURES_STORE_NAME = 'featuresStore'
-      let db;// この'db'変数は、このIIFEの中だけで有効になる
-
-
-      function openDb() {
-        return new Promise((resolve, reject) => {
-          if (db) return resolve(db);
-
-          const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-          request.onerror = (event) => reject("IndexedDB error: " + request.error);
-          request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve(db);
-          };
-          request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'rowNumber' });
-            }
-            if (!db.objectStoreNames.contains(CONFIG_STORE_NAME)) {
-              db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
-            }
-            if (!db.objectStoreNames.contains(FEATURES_STORE_NAME)) {
-                db.createObjectStore(FEATURES_STORE_NAME, { keyPath: 'id' });
-            }
-
-          };
-        });
-      }
-
-    // ★ データを保存・取得する関数を追加
-    async function cacheFeatures(dataToCache) {
-        const db = await openDb();
-        const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
-        const store = tx.objectStore(FEATURES_STORE_NAME);
-        // 常に最新のデータで上書きするため、キーは固定値 'main' などにする
-        await promisifyRequest(store.put({ id: 'main', data: dataToCache }));
-        return tx.done;
-        //return new Promise(resolve => { tx.oncomplete = () => resolve(); });
-      
-    }
-    async function getCachedFeatures() {
-        const db = await openDb();
-        const tx = db.transaction(FEATURES_STORE_NAME, 'readonly');
-      const store = tx.objectStore(FEATURES_STORE_NAME); // ★ 正しいストア取得
-        const result = await promisifyRequest(store.get('main'));
-        return result ? result.data : null;
-    }
-
-    // ★★★ Promiseでラップしたヘルパー関数 ★★★
-    function promisifyRequest(request) {
-        return new Promise((resolve, reject) => {
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    // ★ 設定を保存/取得する関数を追加
-    async function setConfig(key, value) {
-        const db = await openDb();
-        const tx = db.transaction(CONFIG_STORE_NAME, 'readwrite');
-        const store = tx.objectStore(CONFIG_STORE_NAME); // ★ 正しいストア取得方法
-        await store.put({ key, value });
-        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
-    }
-    
-    async function getConfig(key) {
-        const db = await openDb();
-        const tx = db.transaction(CONFIG_STORE_NAME, 'readonly');
-        const store = tx.objectStore(CONFIG_STORE_NAME); 
-        const request = store.get(key);
-        const result = await promisifyRequest(request);
-        return result ? result.value : undefined;
-    }
-
-      async function putToQueue(update) {
-      const db = await openDb();
-      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
-      const store = tx.objectStore(UPDATE_STORE_NAME);
-      store.put(update);
-        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
-    }
-
-    async function getQueue() {
-      const db = await openDb();
-      const tx = db.transaction(UPDATE_STORE_NAME, 'readonly');
-      const store = tx.objectStore(UPDATE_STORE_NAME);
-      return await promisifyRequest(store.getAll());
-    }
-
-    async function clearQueue() {
-      const db = await openDb();
-      const tx = db.transaction(UPDATE_STORE_NAME, 'readwrite');
-      const store = tx.objectStore(UPDATE_STORE_NAME);
-      store.clear();
-        return new Promise(resolve => { tx.oncomplete = () => resolve(); });
-    }
-
-    async function clearCachedFeatures() {
-      const db = await openDb();
-      const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
-      const store = tx.objectStore(FEATURES_STORE_NAME);
-      
-      // cacheFeatures関数でキーを 'main' に固定しているため、
-      // 削除する際も同じ 'main' を指定します。
-      const request = store.delete('main');
-      
-      // 処理が完了するのを待つ
-      await promisifyRequest(request); 
-      
-      // トランザクションの完了を待つ (任意ですが、より確実になります)
-      return new Promise(resolve => { 
-        tx.oncomplete = () => {
-          console.log('Cache entry "main" deleted successfully.');
-          resolve(); 
-        };
-      });
-    }
-
-    // ★ 2. return { ... } を追加
-    return {
-      putToQueue: putToQueue,
-      getQueue: getQueue,
-      clearQueue: clearQueue,
-      setConfig,
-      getConfig,
-      cacheFeatures, 
-      getCachedFeatures,
-      clearCachedFeatures
-    };
-
-  })(); // ★ 3. })(); を追加
+importScripts('./db.js');
 
   // --- IndexedDBヘルパー関数ここまで ---
 ////index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2）。これが更新の引き金となります。
-const CACHE_NAME = 'map-app-cache-v7.7'; 
+const CACHE_NAME = 'map-app-cache-v7.8'; 
 const MAPS_CACHE_NAME = 'maps-tiles-cache-v1';
 
 // ★ オフラインで表示したいファイルのリスト
@@ -314,6 +175,7 @@ const urlsToCache = [
       
       // サーバーに送るためのデータ形式に変換
       const updates = queue.map(item => ({
+	spreadsheetId: item.spreadsheetId,
         row: item.rowNumber,
         status: item.valueToSet
       }));
@@ -325,9 +187,6 @@ const urlsToCache = [
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'batchUpdateStatuses',
-          // spreadsheetIdはサーバー側で固定か、別途取得する必要がある
-          // ここでは仮に固定値とするか、IndexedDBに保存しておく
-          spreadsheetId: SPREADSHEET_ID,
           token: SECRET_TOKEN,
           updates: updates
         })
@@ -354,39 +213,4 @@ const urlsToCache = [
       throw error;
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
