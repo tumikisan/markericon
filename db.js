@@ -2,7 +2,7 @@
   const dbManager = (() => {
 
       const DB_NAME = 'map-app-db';
-      const DB_VERSION = 6;
+      const DB_VERSION = 7;
       const UPDATE_STORE_NAME = 'updateQueue';
       const CONFIG_STORE_NAME = 'config'; // ★ 設定用ストア名
       const FEATURES_STORE_NAME = 'featuresStore'
@@ -23,7 +23,7 @@
           request.onupgradeneeded = (event) => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains(UPDATE_STORE_NAME)) {
-            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'rowNumber' });
+            db.createObjectStore(UPDATE_STORE_NAME, { keyPath: 'queueId' });
             }
             if (!db.objectStoreNames.contains(CONFIG_STORE_NAME)) {
               db.createObjectStore(CONFIG_STORE_NAME, { keyPath: 'key' });
@@ -37,21 +37,21 @@
       }
 
     // ★ データを保存・取得する関数を追加
-    async function cacheFeatures(dataToCache) {
+    async function cacheFeatures(cacheKey, dataToCache) {
         const db = await openDb();
         const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
         const store = tx.objectStore(FEATURES_STORE_NAME);
         // 常に最新のデータで上書きするため、キーは固定値 'main' などにする
-        await promisifyRequest(store.put({ id: 'main', data: dataToCache }));
+        await promisifyRequest(store.put({ id: cacheKey, data: dataToCache }));
         return tx.done;
         //return new Promise(resolve => { tx.oncomplete = () => resolve(); });
       
     }
-    async function getCachedFeatures() {
+    async function getCachedFeatures(cacheKey) {
         const db = await openDb();
         const tx = db.transaction(FEATURES_STORE_NAME, 'readonly');
-      const store = tx.objectStore(FEATURES_STORE_NAME); // ★ 正しいストア取得
-        const result = await promisifyRequest(store.get('main'));
+        const store = tx.objectStore(FEATURES_STORE_NAME); // ★ 正しいストア取得
+        const result = await promisifyRequest(store.get(cacheKey));
         return result ? result.data : null;
     }
 
@@ -104,14 +104,14 @@
         return new Promise(resolve => { tx.oncomplete = () => resolve(); });
     }
 
-    async function clearCachedFeatures() {
+    async function clearCachedFeatures(cacheKey) {
       const db = await openDb();
       const tx = db.transaction(FEATURES_STORE_NAME, 'readwrite');
       const store = tx.objectStore(FEATURES_STORE_NAME);
       
       // cacheFeatures関数でキーを 'main' に固定しているため、
       // 削除する際も同じ 'main' を指定します。
-      const request = store.delete('main');
+      const request = store.delete(cacheKey);
       
       // 処理が完了するのを待つ
       await promisifyRequest(request); 
@@ -119,7 +119,7 @@
       // トランザクションの完了を待つ (任意ですが、より確実になります)
       return new Promise(resolve => { 
         tx.oncomplete = () => {
-          console.log('Cache entry "main" deleted successfully.');
+          console.log(`Cache entry "${cacheKey}" deleted successfully.`);
           resolve(); 
         };
       });
@@ -138,18 +138,4 @@
     };
 
   })(); // ★ 3. })(); を追加
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
