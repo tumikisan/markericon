@@ -436,6 +436,7 @@
     <button id="reset-center-button" class="map-button">初期位置に戻る</button>
     <button id="start-tracking-button" class="map-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
+	<button id="report-error-button" class="map-button" style="color: #dc3545;">異常報告</button>
   　</div>
     
     <button id="force-reload-button" class="bottom-left-button">強制更新</button>
@@ -835,6 +836,47 @@
               bottomSheet.classList.remove('is-visible');
               // ★★★ 追加: 閉じる時にクリア ★★★
               currentApartment = null;
+          });
+
+		  // ★★★ 異常報告（サイレント送信）の処理 ★★★
+          const reportButton = document.getElementById('report-error-button');
+          reportButton.addEventListener('click', async () => {
+              // 確認ダイアログを出す
+              if (!confirm(`この地図の異常を管理者に報告しますか？\n（タイトル: ${document.title}）`)) {
+                  return;
+              }
+
+              // ボタンを一時的に無効化
+              reportButton.disabled = true;
+              reportButton.textContent = "送信中...";
+
+              // ★ ステップ1でメモした情報に書き換えてください
+              const FORM_ID = '1FAIpQLSeGlO6GHuu-9yq_uousUgsWhh4JH5MRMwam2eRDmd0KOMvW9g';
+              const ENTRY_TITLE = 'entry.337223367'; // 地図タイトル用のentry
+              const ENTRY_URL = 'entry.1815098010';   // URL用のentry
+
+              const submitUrl = `https://docs.google.com/forms/d/e/${FORM_ID}/formResponse`;
+              
+              // 送信するデータを作成
+              const formData = new FormData();
+              formData.append(ENTRY_TITLE, document.title); // 今見ている地図のタイトル
+              formData.append(ENTRY_URL, window.location.href); // 今開いているURL
+
+              try {
+                  // mode: 'no-cors' を使うことで、別タブを開かずに裏側で強制送信できる
+                  await fetch(submitUrl, {
+                      method: 'POST',
+                      mode: 'no-cors',
+                      body: formData
+                  });
+                  alert("報告を送信しました。ご協力ありがとうございます。");
+              } catch (error) {
+                  alert("通信エラーが発生しました。電波の良いところで再度お試しください。");
+              } finally {
+                  // ボタンを元に戻す
+                  reportButton.disabled = false;
+                  reportButton.textContent = "異常報告";
+              }
           });
 
         // ★★★ ここから追加: オンライン/オフラインの監視 ★★★
@@ -1640,5 +1682,6 @@
     </script>
   </body>
 </html>
+
 
 
