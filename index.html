@@ -98,6 +98,29 @@
         transition: background-color 0.2s;
       }
 
+	　/* ★ 異常報告ボタン用（下部中央） */
+      .bottom-center-button {
+        position: absolute;
+        bottom: 10px;       /* 下端からの距離 */
+        left: 50%;          /* 画面の左から50%の位置 */
+        transform: translateX(-50%); /* 自身の幅の半分だけ左に戻して完璧な中央にする */
+        z-index: 5;
+        background-color: #fff;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px; /* 少し丸みを持たせる */
+        box-shadow: 0 2px 6px rgba(0,0,0,.4); /* 影を少し濃くして目立たせる */
+        cursor: pointer;
+        font-size: 48px;
+        font-weight: bold;
+        color: #dc3545;     /* 赤色テキスト */
+        text-align: center;
+        transition: background-color 0.2s;
+      }
+      .bottom-center-button:hover {
+        background-color: #f8d7da; /* 押したときに少し赤くする */
+      }
+
       /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
       body.no-sub-info .map-controls-right {
         top: 100px; /* 補足情報がない分、上に詰める */
@@ -436,7 +459,7 @@
     <button id="reset-center-button" class="map-button">初期位置に戻る</button>
     <button id="start-tracking-button" class="map-button">現在地表示</button>
     <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
-	<button id="report-error-button" class="map-button" style="color: #dc3545;">異常報告</button>
+	<button id="report-error-button" class="bottom-center-button">異常報告</button>
   　</div>
     
     <button id="force-reload-button" class="bottom-left-button">強制更新</button>
@@ -1682,6 +1705,7 @@
     </script>
   </body>
 </html>
+
 
 
 
