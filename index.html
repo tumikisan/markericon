@@ -1356,14 +1356,14 @@
             // 判定基準: 面積1000㎡(0.1ha)以上 または 周囲長100m以上
             
             // ★条件を満たす場合（大きい区域）
-            if (area >= 1000 || perimeter >= 100) {
+            if (area >= 100 || perimeter >= 50) {
                 polyOptions = {
                     paths: path,
                     strokeColor: "#FFFFFF", // 白枠
                     strokeOpacity: 0.8,
                     strokeWeight: 2,
                     fillColor: "#FFFFFF",   // 白塗り
-                    fillOpacity: 0.35,      // 少し透過
+                    fillOpacity: 1.0,      // 透過しない
                     clickable: false,
                     zIndex: 2, // ★順序を指定
                     map: map
@@ -1376,7 +1376,7 @@
                     strokeOpacity: 0.8,
                     strokeWeight: 2,
                     fillColor: "#000000",   // 塗り
-                    fillOpacity: 0.4,
+                    fillOpacity: 0.6,
                     clickable: false,
                     zIndex: 3, // ★順序を指定
                     map: map
@@ -1816,6 +1816,7 @@
     </script>
   </body>
 </html>
+
 
 
 
