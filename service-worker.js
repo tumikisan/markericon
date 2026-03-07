@@ -2,8 +2,7 @@ importScripts('./db.js');
 
   // --- IndexedDBヘルパー関数ここまで ---
 ////index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2）。これが更新の引き金となります。
-const CACHE_NAME = 'map-app-cache-v8.2'; 
-const MAPS_CACHE_NAME = 'maps-tiles-cache-v1';
+const CACHE_NAME = 'map-app-cache-v8.3'; 
 
 // ★ オフラインで表示したいファイルのリスト
 const urlsToCache = [
@@ -31,7 +30,7 @@ const urlsToCache = [
   self.addEventListener('activate', event => {
     console.log('Service Worker: Activating...');
     // ★★★ ホワイトリスト方式で、保持すべきキャッシュを明示する ★★★
-    const cacheWhitelist = [CACHE_NAME, MAPS_CACHE_NAME];
+    const cacheWhitelist = [CACHE_NAME];
 
     event.waitUntil(
       caches.keys().then((cacheNames) => {
@@ -59,33 +58,9 @@ const urlsToCache = [
 
   if (request.method !== 'GET') return;
 
-  // Google Maps APIとタイルのリクエスト
+  // ★ Google Mapsの通信はService Workerで処理せず、ブラウザ標準に任せる
   if (url.hostname.includes('googleapis.com') || url.hostname.includes('googleusercontent.com')) {
-    event.respondWith(
-      caches.open(MAPS_CACHE_NAME).then(cache => {
-        return cache.match(request).then(cachedResponse => {
-          // ★ ネットワークリクエストを非同期で実行
-          const fetchedResponsePromise = fetch(request).then(networkResponse => {
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          });
-          
-          // ★ キャッシュにあればそれを返し、なければネットワークの結果を待つ
-          // これにより、オンライン時は最新、オフライン時はキャッシュが表示される
-          return cachedResponse || fetchedResponsePromise;
-        }).catch(() => {
-            // ★★★ オフラインでキャッシュもない場合のフォールバック ★★★
-            // 例えば、地図タイルがない場合に表示する代替の透明な画像を返すなど
-            if (url.pathname.includes('/maps/vt')) { // もしタイルリクエストなら
-                return new Response(
-                    '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"></svg>',
-                    { headers: { 'Content-Type': 'image/svg+xml' } }
-                );
-            }
-        })
-      })
-    );
-    return;
+	  return; 
   }
 
   // アプシェルのリクエスト (Cache First)
@@ -213,6 +188,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
