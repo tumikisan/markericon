@@ -1743,7 +1743,7 @@
         const googleMapsScript = document.createElement('script');
         
         // 3. src属性に、APIキーを含んだURLを設定する
-        googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${YOUR_API_KEY}&callback=initMap&libraries=marker`;
+        googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${YOUR_API_KEY}&callback=initMap&libraries=marker&loading=async`;
         
         // 4. defer属性を設定して、非同期で読み込むようにする
         googleMapsScript.defer = true;
@@ -1756,12 +1756,6 @@
     </script>
   </body>
 </html>
-
-
-
-
-
-
 
 
 
