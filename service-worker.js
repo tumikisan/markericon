@@ -2,7 +2,7 @@ importScripts('./db.js');
 
   // --- IndexedDBヘルパー関数ここまで ---
 ////index.html や db.js を変更したら、必ず sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2）。これが更新の引き金となります。
-const CACHE_NAME = 'map-app-cache-v8.7'; 
+const CACHE_NAME = 'map-app-cache-v8.8'; 
 
 // ★ オフラインで表示したいファイルのリスト
 const urlsToCache = [
@@ -188,6 +188,7 @@ const urlsToCache = [
       throw error;
     }
   }
+
 
 
 
