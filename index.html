@@ -1096,10 +1096,10 @@
       // ★ マーカー生成を補助するヘルパー関数
       function createAdvancedMarker(markerData, contentDiv) {
           return new google.maps.marker.AdvancedMarkerElement({
-              position: { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) },
+              position: { lat: Number(markerData.y), lng: Number(markerData.x) },
               map: map,
               content: contentDiv,
-              title: markerData.name
+              title: markerData.n
           });
       }
       
@@ -1756,6 +1756,7 @@
     </script>
   </body>
 </html>
+
 
 
 
