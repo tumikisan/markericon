@@ -1639,8 +1639,8 @@
                         const ref = markerRefs[`${item.spreadsheetId}_${item.row}`];
                         if (ref) {
                             // 1. 内部データを最新にする
-                            ref.data.statusAQ = item.newStatusAQ;
-                            ref.data.statusAS = item.newStatusAS;
+                            ref.data.aq = item.newStatusAQ;
+							ref.data.as = item.newStatusAS;
                             
                             // 2. 種類に応じた更新処理
                             // ★ ここで「updateColor関数が存在する場合のみ」実行するように修正
@@ -1756,6 +1756,7 @@
     </script>
   </body>
 </html>
+
 
 
 
