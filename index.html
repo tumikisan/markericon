@@ -1624,7 +1624,7 @@
           console.log(`未送信データ ${queue.length} 件を同期開始...`);
         
             if (!queue || queue.length === 0) return;
-            const updates = queue.map(item => ({ row: item.rowNumber, status: item.valueToSet }));
+            const updates = queue.map(item => ({ spreadsheetId: item.spreadsheetId, row: item.rowNumber, status: item.valueToSet }));
 
             try {
                 // ★★★ 修正: サーバーからの戻り値 (resultData) を受け取る ★★★
@@ -1756,6 +1756,7 @@
     </script>
   </body>
 </html>
+
 
 
 
