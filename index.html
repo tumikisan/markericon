@@ -59,7 +59,7 @@
       /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
       .map-controls-right {
         position: absolute;
-        top: var(--controls-top); /* ★固定の160pxから変数に変更 */
+        top: var(--right-top); /* ★変更 */
         right: 10px;
         z-index: 5;
         display: flex;
@@ -69,7 +69,7 @@
 
 	  /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
 	  body.no-sub-info .map-controls-right {
-	    top: var(--controls-top-no-sub); /* ★固定の100pxから変数に変更 */
+	    top: var(--right-top-no-sub); /* ★変更 */
 	  }
 
       .map-button {
@@ -435,7 +435,7 @@
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
       /* ボタンを格納しているコンテナの位置調整 */
       .gm-style-mtc {
-          margin: var(--controls-top) 0 0 10px !important; /* ★固定の160pxから変数に変更 */
+          margin: var(--left-top) 0 0 10px !important; /* ★変更 */
           /* 親要素の高さを自動にすることで、中のボタンが大きくなってもはみ出ないようにする */
           height: auto !important; 
       }
@@ -488,7 +488,7 @@
 
        /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
       body.no-sub-info .gm-style-mtc {
-        margin: var(--controls-top-no-sub) 0 0 10px !important; /* ★固定の100pxから変数に変更 */
+        margin: var(--left-top-no-sub) 0 0 10px !important; /* ★変更 */
       }
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
@@ -535,8 +535,13 @@
 	  --marker-size: 80px;       /* マーカーの大きさ */
 	  --marker-font: 48px;       /* マーカー内の文字 */
 	  /* ★ここを追加：ボタン群の上からの距離（PC・iPad用） */
-	  --controls-top: 110px;         /* 補足情報【あり】の場合 */
-	  --controls-top-no-sub: 75px;   /* 補足情報【なし】の場合 */
+	  /* 広すぎる場合は数値を減らし、狭すぎる場合は増やしてください */
+	  --right-top: 90px;         /* 補足情報【あり】の場合 */
+	  --right-top-no-sub: 65px;  /* 補足情報【なし】の場合 */
+	  
+	  /* 左のボタンは、右のボタンからGoogleマップ特有の余白(10px)を引いて自動で高さを揃えます */
+	  --left-top: calc(var(--right-top) - 10px);
+	  --left-top-no-sub: calc(var(--right-top-no-sub) - 10px);
 	}
 	
 	/* --- 【スマホ用】画面の横幅が 600px 以下の時の設定 --- */
@@ -547,9 +552,14 @@
 	    --button-padding: 8px 16px;
 	    --marker-size: 48px;       /* マーカーを指で押しやすい最小サイズに */
 	    --marker-font: 24px;
-		/* ★ここを追加：ボタン群の上からの距離（スマホ用） */
-	    --controls-top: 75px;        /* 補足情報【あり】の場合 */
-	    --controls-top-no-sub: 50px; /* 補足情報【なし】の場合 */
+		/* ★【PC・iPadの余白】タイトルの下とボタンとの距離 */
+		/* ★【スマホの余白】タイトルの下とボタンとの距離 */
+	    /* 広すぎる場合は数値を減らし、狭すぎる場合は増やしてください */
+	    --right-top: 60px;        /* 補足情報【あり】の場合 */
+	    --right-top-no-sub: 45px; /* 補足情報【なし】の場合 */
+	    
+	    --left-top: calc(var(--right-top) - 10px);
+	    --left-top-no-sub: calc(var(--right-top-no-sub) - 10px);
 	  }
 	}
 	
