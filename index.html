@@ -522,8 +522,96 @@
           display: block !important;
       }
 
-      
-     
+      /* --- 共通の基本サイズ（主にPC・iPadなどの大きな画面用） --- */
+	:root {
+	  --main-font-size: 32px;    /* 基本の文字サイズ */
+	  --title-font-size: 40px;   /* タイトルの文字サイズ */
+	  --button-padding: 12px 24px;
+	  --marker-size: 80px;       /* マーカーの大きさ */
+	  --marker-font: 48px;       /* マーカー内の文字 */
+	}
+	
+	/* --- 【スマホ用】画面の横幅が 600px 以下の時の設定 --- */
+	@media screen and (max-width: 600px) {
+	  :root {
+	    --main-font-size: 18px;    /* スマホでは文字を小さく */
+	    --title-font-size: 24px;   /* タイトルもスマホサイズに */
+	    --button-padding: 8px 16px;
+	    --marker-size: 48px;       /* マーカーを指で押しやすい最小サイズに */
+	    --marker-font: 24px;
+	  }
+	}
+	
+	/* --- 各要素に「変数」を適用する --- */
+	.main-title {
+	  font-size: var(--title-font-size) !important;
+	}
+	
+	.title-info {
+	  font-size: var(--main-font-size) !important;
+	}
+	
+	.map-button, .bottom-left-button, .bottom-center-button {
+	  font-size: var(--main-font-size) !important;
+	  padding: var(--button-padding) !important;
+	}
+	
+	/* マーカーのサイズ調整 */
+	.css-marker {
+	  width: var(--marker-size) !important;
+	  height: var(--marker-size) !important;
+	}
+	
+	.marker-text {
+	  font-size: var(--marker-font) !important;
+	}
+	
+	/* 備考入力モーダルの文字 */
+	.modal-title { font-size: var(--title-font-size); }
+	.modal-textarea { font-size: var(--main-font-size); }
+	.modal-btn { font-size: var(--main-font-size); }
+	
+	/* --- ここから：その他の要素も変数に合わせて自動調整させる一括上書き --- */
+	
+	/* 1. Googleマップの「地図 / 航空写真」ボタン */
+	div.gm-style-mtc > button {
+	  font-size: var(--main-font-size) !important;
+	  padding: var(--button-padding) !important;
+	}
+	
+	/* 2. ボトムシート（部屋リスト）と×ボタン */
+	.sheet-header h3 { font-size: var(--title-font-size) !important; }
+	#close-sheet-button { font-size: calc(var(--title-font-size) * 2) !important; }
+	.room-item-name { font-size: var(--main-font-size) !important; }
+	.room-item-actions button { 
+	  font-size: var(--main-font-size) !important; 
+	  padding: var(--button-padding) !important;
+	}
+	
+	/* 3. マーカー上の「✓」と「P」マーク、アパート等の文字 */
+	/* calc() を使って、マーカーの文字サイズに比例して自動計算させます */
+	.checkmark-overlay, .p-overlay {
+	  font-size: calc(var(--marker-font) * 1.2) !important;
+	  /* スマホとPCで位置ズレを防ぐため、固定のpxではなく % で位置調整 */
+	  transform: translate(-10%, -30%) !important; 
+	}
+	.apartment-marker { font-size: calc(var(--marker-font) * 0.8) !important; }
+	.autolock-marker { font-size: calc(var(--marker-font) * 0.75) !important; }
+	
+	/* 4. マーカー更新中のスピナー（ぐるぐる） */
+	.spinner {
+	  width: calc(var(--marker-size) * 0.7) !important;
+	  height: calc(var(--marker-size) * 0.7) !important;
+	  margin-top: calc(var(--marker-size) * -0.35) !important;
+	  margin-left: calc(var(--marker-size) * -0.35) !important;
+	}
+	
+	/* 5. 画面上部の通信ステータスバー */
+	.connection-status {
+	  font-size: var(--main-font-size) !important;
+	}
+	
+	/* --- ここまで --- */
 
     </style>
   </head>
