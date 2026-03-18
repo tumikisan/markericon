@@ -556,9 +556,13 @@
 	  --button-padding: 12px 24px;
 	  --marker-size: 80px;       /* マーカーの大きさ */
 	  --marker-font: 48px;       /* マーカー内の文字 */
-	  /* ★【PC・iPadの余白】タイトルの下とボタンとの距離 */
-	  --controls-top: 110px;         /* 補足情報【あり】の場合 */
-	  --controls-top-no-sub: 70px;   /* 補足情報【なし】の場合 */
+	  /* ★左側（地図・航空写真）の高さ */
+	  --left-top: 100px;
+	  --left-top-no-sub: 70px;
+	
+	  /* ★右側（初期位置・現在地）の高さ */
+	  --right-top: 110px;
+	  --right-top-no-sub: 75px;
 	}
 	
 	/* --- 【スマホ用】画面の横幅が 600px 以下の時の設定 --- */
@@ -569,10 +573,13 @@
 		--button-padding: 2px 6px;
 		--marker-size: 48px;       /* マーカーを指で押しやすい最小サイズに */
 		--marker-font: 24px;
-		/* ★【スマホの余白】タイトルの下とボタンとの距離 */
-		/* タイトルにめり込まないギリギリの数値に調整しています */
-		--controls-top: 85px;        /* 補足情報【あり】の場合 */
-		--controls-top-no-sub: 55px; /* 補足情報【なし】の場合 */
+		/* ★スマホでの左側の高さ調整はここ */
+	    --left-top: 70px;
+	    --left-top-no-sub: 45px;
+	
+	    /* ★スマホでの右側の高さ調整はここ */
+	    --right-top: 85px;
+	    --right-top-no-sub: 55px;
 	  }
 	}
 	
