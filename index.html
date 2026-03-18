@@ -433,10 +433,24 @@
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
       /* ボタンを格納しているコンテナの位置調整 */
+      /* ★ 起点(top)を画面上端(0px)から「変数」の位置まで一気に引き下ろす */
+      .gm-style-mtc-bbw {
+          position: absolute !important;
+          top: var(--controls-top) !important;      /* これで右ボタンと起点が揃います */
+          left: 10px !important;
+          margin: 0 !important;                     /* Googleの余計なマージンをリセット */
+          height: min-content !important;           /* 領域をボタンの高さにギュッと縮める */
+      }
+      
+      /* 補足情報がない場合 */
+      body.no-sub-info .gm-style-mtc-bbw {
+          top: var(--controls-top-no-sub) !important;
+      }
+
+      /* 中の構造も高さを最小限にする */
       .gm-style-mtc {
-          margin: var(--controls-top) 0 0 10px !important; /* ★変更 */
-          /* 親要素の高さを自動にすることで、中のボタンが大きくなってもはみ出ないようにする */
-          height: auto !important; 
+          height: min-content !important; 
+          margin: 0 !important;
       }
 
       /* ★★★ ボタン自体のスタイルをより強力に指定 ★★★ */
