@@ -59,7 +59,7 @@
       /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
       .map-controls-right {
         position: absolute;
-        top: var(--controls-top); /* ★変更 */
+        top: var(--right-top); /* ★変更 */
         right: 10px;
         z-index: 5;
         display: flex;
@@ -69,7 +69,7 @@
 
 	  /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
 	  body.no-sub-info .map-controls-right {
-	    top: var(--controls-top-no-sub); /* ★変更 */
+	    top: var(--right-top-no-sub); /* ★変更 */
 	  }
 
       .map-button {
@@ -436,7 +436,7 @@
       /* ★ 起点(top)を画面上端(0px)から「変数」の位置まで一気に引き下ろす */
       .gm-style-mtc-bbw {
           position: absolute !important;
-          top: var(--controls-top) !important;      /* これで右ボタンと起点が揃います */
+          top: var(--left-top) !important;      /* これで右ボタンと起点が揃います */
           left: 10px !important;
           margin: 0 !important;                     /* Googleの余計なマージンをリセット */
           /* ★【追加】領域をボタンの高さに合わせるための設定 */
@@ -450,7 +450,7 @@
       
       /* 補足情報がない場合 */
       body.no-sub-info .gm-style-mtc-bbw {
-          top: var(--controls-top-no-sub) !important;
+          top: var(--left-top-no-sub) !important;
       }
 
       /* 中の構造も高さを最小限にする */
