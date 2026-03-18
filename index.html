@@ -467,7 +467,7 @@
 		  margin: 0 !important;               /* ボタンの外側の余白を消す */
           height: auto !important; /* 高さはpaddingに任せる */
           width: auto !important;   
-          padding: 12px 24px !important; /* ★他のボタンに合わせたpadding */
+          padding: var(--button-padding) !important; /* 変数でサイズを制御 */
           background-color: #fff !important;
           border: none !important; /* デフォルトの境界線をリセット */
           box-shadow: 0 2px 6px rgba(0,0,0,.3) !important;
@@ -475,7 +475,7 @@
           
           /* ★★★ 文字のスタイルを最優先で指定 ★★★ */
           font-family: Roboto, sans-serif !important;
-          font-size: 48px !important; /* ★フォントサイズを強制指定 */
+          font-size: var(--main-font-size) !important; /* 変数でフォントサイズを制御 */
           font-weight: 500 !important;
           color: #222 !important;
           line-height: 1.2 !important; /* 行の高さを調整 */
