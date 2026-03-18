@@ -439,7 +439,13 @@
           top: var(--controls-top) !important;      /* これで右ボタンと起点が揃います */
           left: 10px !important;
           margin: 0 !important;                     /* Googleの余計なマージンをリセット */
-          height: min-content !important;           /* 領域をボタンの高さにギュッと縮める */
+          /* ★【追加】領域をボタンの高さに合わせるための設定 */
+          display: flex !important;
+          flex-direction: row !important;      /* 横並びを確定 */
+          align-items: flex-start !important;  /* ★中身（ボタン）を一番上に寄せる */
+          height: auto !important;             /* 高さを自動（中身に合わせる）にする */
+          min-height: 0 !important;            /* Googleが設定している最小高さを解除 */
+          padding: 0 !important;               /* 余計な内側余白を消す */
       }
       
       /* 補足情報がない場合 */
@@ -451,6 +457,8 @@
       .gm-style-mtc {
           height: min-content !important; 
           margin: 0 !important;
+          padding: 0 !important;
+          height: auto !important;
       }
 
       /* ★★★ ボタン自体のスタイルをより強力に指定 ★★★ */
