@@ -455,15 +455,16 @@
 
       /* 中の構造も高さを最小限にする */
       .gm-style-mtc {
-          height: min-content !important; 
           margin: 0 !important;
           padding: 0 !important;
-          height: auto !important;
-      }
-
+          height: auto !important;            /* ★高さを自動（最小）にする */
+          display: flex !important;           /* ★中身を制御するためにflex化 */
+          align-items: flex-start !important; /* ★中身のボタンを一番上に寄せる */
+	  }
       /* ★★★ ボタン自体のスタイルをより強力に指定 ★★★ */
       /* div.gm-style-mtc > button のように、直接の子要素を指定して優先度を上げる */
       div.gm-style-mtc > button {
+		  margin: 0 !important;               /* ボタンの外側の余白を消す */
           height: auto !important; /* 高さはpaddingに任せる */
           width: auto !important;   
           padding: 12px 24px !important; /* ★他のボタンに合わせたpadding */
