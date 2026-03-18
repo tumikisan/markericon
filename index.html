@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>シンプルな地図</title>
     <style>
       /* ページの余白をなくし、地図を全画面表示にするためのスタイル */
@@ -965,9 +966,29 @@
               remarksInput.value = ''; // 入力欄をクリア
           });
 
+		  function resetMobileZoom() {
+              remarksInput.blur(); // 入力欄のフォーカスを外してキーボードを閉じる
+              
+              // 画面のメタタグを一時的に書き換えて、強制的に倍率1.0に戻す
+              const viewport = document.querySelector('meta[name="viewport"]');
+              if (viewport) {
+                  const originalContent = viewport.content;
+                  // 一瞬だけ最大ズームを1.0に制限することで、ブラウザに強制リセットさせる
+                  viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0';
+                  
+                  // 0.3秒後に元の設定（ユーザーが自由にズームできる状態）に戻す
+                  setTimeout(() => {
+                      viewport.content = originalContent;
+                  }, 300);
+              }
+              // 画面の位置がズレている場合、左上に強制的に戻す
+              window.scrollTo(0, 0);
+          }
+
           // 2. キャンセルボタンで閉じる
           modalCancelBtn.addEventListener('click', () => {
               modal.style.display = 'none';
+			  resetMobileZoom(); // ★ここでズームをリセット
           });
 
           // 3. 送信ボタンでGoogleフォームへ送信
@@ -999,6 +1020,7 @@
                   });
                   alert("備考を送信しました。ご協力ありがとうございます。");
                   modal.style.display = 'none'; // 成功したら閉じる
+				  resetMobileZoom(); // ★成功時にもズームをリセット
               } catch (error) {
                   alert("通信エラーが発生しました。電波の良いところで再度お試しください。");
               } finally {
