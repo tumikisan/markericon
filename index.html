@@ -59,13 +59,18 @@
       /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
       .map-controls-right {
         position: absolute;
-        top: 160px; /* page-titleの高さに応じて調整 */
+        top: var(--controls-top); /* ★固定の160pxから変数に変更 */
         right: 10px;
         z-index: 5;
         display: flex;
         flex-direction: column; /* ボタンを縦に並べる */
         gap: 10px;           /* ボタン間の余白をまとめて指定 */
       }
+
+	  /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
+	  body.no-sub-info .map-controls-right {
+	    top: var(--controls-top-no-sub); /* ★固定の100pxから変数に変更 */
+	  }
 
       .map-button {
         background-color: #fff;
@@ -430,7 +435,7 @@
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
       /* ボタンを格納しているコンテナの位置調整 */
       .gm-style-mtc {
-          margin: 160px 0 0 10px !important;
+          margin: var(--controls-top) 0 0 10px !important; /* ★固定の160pxから変数に変更 */
           /* 親要素の高さを自動にすることで、中のボタンが大きくなってもはみ出ないようにする */
           height: auto !important; 
       }
@@ -483,7 +488,7 @@
 
        /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
       body.no-sub-info .gm-style-mtc {
-        margin: 100px 0 0 10px !important;
+        margin: var(--controls-top-no-sub) 0 0 10px !important; /* ★固定の100pxから変数に変更 */
       }
 
       /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
@@ -529,6 +534,9 @@
 	  --button-padding: 12px 24px;
 	  --marker-size: 80px;       /* マーカーの大きさ */
 	  --marker-font: 48px;       /* マーカー内の文字 */
+	  /* ★ここを追加：ボタン群の上からの距離（PC・iPad用） */
+	  --controls-top: 110px;         /* 補足情報【あり】の場合 */
+	  --controls-top-no-sub: 75px;   /* 補足情報【なし】の場合 */
 	}
 	
 	/* --- 【スマホ用】画面の横幅が 600px 以下の時の設定 --- */
@@ -539,6 +547,9 @@
 	    --button-padding: 8px 16px;
 	    --marker-size: 48px;       /* マーカーを指で押しやすい最小サイズに */
 	    --marker-font: 24px;
+		/* ★ここを追加：ボタン群の上からの距離（スマホ用） */
+	    --controls-top: 75px;        /* 補足情報【あり】の場合 */
+	    --controls-top-no-sub: 50px; /* 補足情報【なし】の場合 */
 	  }
 	}
 	
