@@ -651,6 +651,34 @@
 	.connection-status {
 	  font-size: var(--main-font-size) !important;
 	}
+
+	/* --- ポップアップ（InfoWindow）のスタイル --- */
+   /* --- ポップアップ（InfoWindow）のスタイル --- */
+      .info-window-content {
+          padding: 8px;
+          font-family: 'Roboto', sans-serif;
+      }
+      .info-window-title {
+          margin: 0 0 12px 0;
+          font-size: var(--title-font-size) !important;
+          font-weight: bold;
+      }
+      .info-window-link {
+          display: inline-block;
+          padding: var(--button-padding) !important;
+          background-color: #007bff;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          font-size: var(--main-font-size) !important;
+      }
+      .info-window-text {
+          margin: 0;
+          background-color: #f0f0f0;
+          padding: 8px;
+          border-radius: 4px;
+          font-size: var(--main-font-size) !important;
+      }
 	
 	/* --- ここまで --- */
 
@@ -1558,20 +1586,20 @@
 
               // 2. InfoWindowに表示するHTMLコンテンツを作成
               let contentString = `
-                  <div style="font-size: 48px; font-family: sans-serif; padding: 10px;">
-                      <h4 style="margin: 0 0 10px 0;">${markerData.n}</h4>
+                  <div style="info-window-content">
+                      <h4 style="info-window-title">${markerData.n || "名称不明"}</h4>
               `;
 
               // 3. 有効なURLがある場合のみ、リンクボタンを追加
               if (isValidUrl) {
                   contentString += `
-                      <a href="${potentialUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                      <a href="${potentialUrl}" target="_blank" rel="noopener noreferrer" class="info-window-link">
                           関連リンクを開く
                       </a>
                   `;
               } else if (potentialUrl) {
                   // URL形式ではないが、何かしらのテキストがある場合はそれを表示
-                  contentString += `<p style="margin: 0; background-color: #f0f0f0; padding: 8px; border-radius: 4px;">${potentialUrl}</p>`;
+                  contentString += `<p class="info-window-text">${potentialUrl}</p>`;
               }
               
               contentString += '</div>';
