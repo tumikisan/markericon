@@ -658,7 +658,7 @@
 	  padding: 8px;
 	  font-family: 'Roboto', sans-serif;
   }
-  .gm-style .gm-style-iw .info-window-title {
+  .info-window-title {
           margin: 0 0 12px 0 !important;
           font-size: var(--title-font-size) !important;
           font-weight: bold !important;
@@ -1587,8 +1587,8 @@
 
               // 2. InfoWindowに表示するHTMLコンテンツを作成
               let contentString = `
-                  <div style="info-window-content">
-                      <h4 style="info-window-title">${markerData.n || "名称不明"}</h4>
+                  <div class="info-window-content">
+                      <h4 class="info-window-title">${markerData.n || "名称不明"}</h4>
               `;
 
               // 3. 有効なURLがある場合のみ、リンクボタンを追加
