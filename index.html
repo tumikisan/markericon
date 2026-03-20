@@ -4,686 +4,489 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>シンプルな地図</title>
     <style>
-      /* ページの余白をなくし、地図を全画面表示にするためのスタイル */
-      /* index.html や db.js を変更したら、必ず  sw.txt の CACHE_NAME のバージョンを上げてください（例: v4.1 → v4.2） */
-
-      *, *::before, *::after {
-        box-sizing: border-box; /* すべての要素で直感的なサイズ計算を可能にする */
-      }
-      
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        font-family: 'Roboto', sans-serif; /* 全体の基本フォントを指定 */
-      }
-      #map {
-        height: 100%;
-        z-index: 1;
-      }
-
-      /* index.html の <style> タグ内 */
-      #page-title {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%; /* 幅を画面いっぱいに */
-          z-index: 5;
-          background-color: rgba(255, 255, 255, 0.85);
-          padding: 8px 24px; /* 左右にも余白を持たせる */
-          font-size: 48px; /* フォントサイズを大きく */
-          margin: 0;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* 境界を明確にするための影 */
-          display: flex;          /* Flexboxを有効化 */
-          flex-direction: column; /* 要素を縦に並べる */
-	  gap: 4px; /* 要素間の余白 */
-      }
-
-      /* メインタイトルのスタイル */
-      .main-title {
-          font-size: 48px;
-          font-weight: bold;
-          text-align: center;     /* タイトルは中央揃え */
-      }
-      
-      /* 補足情報のスタイル */
-      .title-info {
-          width: 100%;            /* 親要素の幅いっぱいに広げる */
-          text-align: right;      /* その中でテキストを右揃えにする */
-          font-size: 48px;        /* 補足情報なのでフォントサイズを調整 */
-          font-weight: normal;    /* 太字を解除 */
-      }
-
-      /* === マップ上のカスタムボタン === */
-
-      /* ★ 右上のボタン群をまとめるコンテナ（改善点） */
-      .map-controls-right {
-        position: absolute;
-        top: var(--right-top); /* ★変更 */
-        right: 10px;
-        z-index: 5;
-        display: flex;
-        flex-direction: column; /* ボタンを縦に並べる */
-        gap: 10px;           /* ボタン間の余白をまとめて指定 */
-      }
-
-	  /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
-	  body.no-sub-info .map-controls-right {
-	    top: var(--right-top-no-sub); /* ★変更 */
-	  }
-
-      .map-button {
-        background-color: #fff;
-        padding: 12px 18px;
-        border: none;
-        border-radius: 3px;
-        box-shadow: 0 2px 6px rgba(0,0,0,.3);
-        cursor: pointer;
-        font-size: 48px;
-        text-align: center;
-        transition: background-color 0.2s;
-      }
-      .map-button:hover {
-        background-color: #f4f4f4; /* 灰色 */
-      }
-
-      /* ★ 左下のボタンの位置（改善点） */
-      .bottom-left-button {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        z-index: 5;
-        background-color: #fff;
-        padding: 12px 18px;
-        border: none;
-        border-radius: 3px;
-        box-shadow: 0 2px 6px rgba(0,0,0,.3);
-        cursor: pointer;
-        font-size: 48px;
-        text-align: center;
-        transition: background-color 0.2s;
-      }
-
-		/* ★ 備考記入ボタン用（下部中央） */
-      .bottom-center-button {
-        position: absolute;
-        bottom: 10px;       /* 下端からの距離 */
-        left: 50%;          /* 画面の左から50%の位置 */
-        transform: translateX(-50%); /* 自身の幅の半分だけ左に戻して完璧な中央にする */
-        z-index: 5;
-        background-color: #fff;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px; /* 少し丸みを持たせる */
-        box-shadow: 0 2px 6px rgba(0,0,0,.4); /* 影を少し濃くして目立たせる */
-        cursor: pointer;
-        font-size: 48px;
-        font-weight: bold;
-        color: #333;     /* 濃いグレーテキスト */
-        text-align: center;
-        transition: background-color 0.2s;
-      }
-      .bottom-center-button:hover {
-        background-color: #e2e6ea; /* 押したときマイルドな灰色 */
-      }
-		
-      /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
-      /*body.no-sub-info .map-controls-right {
-        top: 100px; /* 補足情報がない分、上に詰める */
-      /*}
-		
-      /* ★ 各ボタンの位置を設定 */
-        #stop-tracking-button {  
-            display: none;
-        }
-
-      /* --- ボトムシート関連のスタイル --- */
-
-      .bottom-sheet-container {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          width: 100%;
-          max-height: 60%; /* 画面の高さの最大60%まで */
-          background-color: white;
-          box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-          border-top-left-radius: 16px;
-          border-top-right-radius: 16px;
-          
-          display: flex;
-          flex-direction: column; /* 中の要素を縦に並べる */
-          
-          transform: translateY(100%); /* ★ 初期状態では画面下に隠す */
-          transition: transform 0.3s ease-in-out; /* ★ アニメーション設定 */
-          z-index: 1000; /* 他の要素より手前に表示 */
-      }
-
-	/* ★★★ 以下を新規追加：備考入力モーダルのスタイル ★★★ */
-      .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0,0,0,0.5); /* 半透明の黒背景 */
-          z-index: 10000; /* 最前面 */
-          display: none; /* 初期は非表示 */
-          justify-content: center;
-          align-items: center;
-      }
-
-      .modal-box {
-          background-color: #fff;
-          width: 90%;
-          max-width: 600px;
-          border-radius: 8px;
-          padding: 24px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-      }
-
-      .modal-title {
-          margin: 0;
-          font-size: 48px;
-          font-weight: bold;
-          text-align: center;
-      }
-
-      .modal-textarea {
-          width: 100%;
-          height: 300px;
-          font-size: 32px;
-          padding: 12px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          resize: none; /* サイズ変更不可 */
-      }
-      
-      /* プレースホルダーの色を薄くする */
-      .modal-textarea::placeholder {
-          color: #999;
-          opacity: 1; /* Firefox用 */
-      }
-
-      .modal-buttons {
-          display: flex;
-          justify-content: space-between;
-          gap: 16px;
-      }
-
-      .modal-btn {
-          flex: 1;
-          padding: 16px;
-          font-size: 36px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-      }
-
-      .modal-btn-cancel {
-          background-color: #f8f9fa;
-          border: 1px solid #ddd;
-          color: #333;
-      }
-
-      .modal-btn-send {
-          background-color: #007bff;
-          color: white;
-      }
-      
-      .modal-btn-send:disabled {
-          background-color: #ccc;
-          cursor: not-allowed;
-      }
-
-      /* 表示状態にするためのクラス */
-      .bottom-sheet-container.is-visible {
-          transform: translateY(0); /* ★ 画面内にスライドイン */
-      }
-
-      /* ヘッダー部分のスタイル */
-      .sheet-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          border-bottom: 1px solid #e0e0e0;
-          flex-shrink: 0; /* ヘッダーは縮まないようにする */
-      }
-      .sheet-header h3 {
-          margin: 0;
-          font-size: 48px;
-      }
-      #close-sheet-button {
-          background: none;
-          border: none;
-          font-size: 144px;
-          cursor: pointer;
-          padding: 0 8px;
-      }
-
-      /* コンテンツ（部屋リスト）部分のスタイル */
-      .sheet-content {
-          overflow-y: auto; /* ★ コンテンツがはみ出たらスクロール */
-          padding: 8px;
-          flex-grow: 1; /* 残りの高さをすべて使う */
-      }
-
-      /* 部屋リストの各行のスタイル */
-      .room-item {
-          display: flex;
-          align-items: center;
-          padding: 12px 8px;
-          border-bottom: 1px solid #f0f0f0;
-      }
-      .room-item-name {
-          flex-grow: 1; /* 部屋番号が残りの幅をすべて使う */
-          font-size: 48px;
-      }
-      .room-item-actions button {
-          margin-left: 8px;
-          padding: 12px 24px;
-          font-size: 48px; 
-          border: 1px solid #ccc;
-          border-radius: 16px;
-          background-color: #f8f9fa;
-          cursor: pointer;
-      }
-      .room-item-actions button.active {
-          background-color: #007bff; /* 例：アクティブなボタンの色 */
-          color: white;
-          border-color: #007bff;
-      }
-
-      /* --- 部屋リストのステータス別スタイル --- */
-
-      .room-item.status-refused { /* 拒否 */
-          background-color: #f8d7da; /* 薄い赤 */
-      }
-      .room-item.status-refused .room-item-name {
-          color: #721c24; /* 濃い赤 */
-          font-weight: bold;
-      }
-
-      .room-item.status-long-term-aq { /* 長期 (AQ) */
-          background-color: #fff3cd; /* 薄い黄 */
-      }
-      .room-item.status-long-term-aq .room-item-name {
-          color: #856404; /* 濃い黄 */
-      }
-
-      .room-item.status-long-term-as { /* 長期 (AS) */
-          background-color: #d4edda; /* 薄い緑 */
-      }
-      .room-item.status-long-term-as .room-item-name {
-          color: #155724; /* 濃い緑 */
-      }
-
-      .room-item.status-vacant { /* 空 */
-          background-color: #e2e3e5; /* 薄い灰色 */
-      }
-      .room-item.status-vacant .room-item-name {
-          color: #383d41; /* 濃い灰色 */
-          text-decoration: line-through; /* 取り消し線 */
-      }
-
-      /* マーカーのコンテナ（土台）のスタイル */
-      .css-marker {
-        width: 96px;           /* 幅 */
-        height: 96px;          /* 高さ */
-        border-radius: 50%;    /* ★ これで要素が正円になる */
-        position: relative; /* ★ 重ね合わせの基準にするため */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* 影を追加 */
-        cursor: pointer; /* クリックできることを示すカーソル */
-      }
-
-      .overlay { /* 共通スタイルをまとめる */
-        position: absolute;
-        top: 0; 
-        left: 0;
-        width: 100%; 
-        height: 100%;
-        border-radius: 50%;
-        color: #000000;
-        /*font-weight: bold;*/
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        /*text-shadow: 2px 3px 5px rgba(0,0,0,0.5); /* 影を共通化 */
-        display: none;
-      }
-      /*transparent透明*/
-
-      /* ★ 個別のスタイル */
-      /* ベースとなる文字のスタイル */
-      .marker-text {
-          font-size: 72px;
-      }
-
-      /* レ点と"P"の共通スタイル */
-      .checkmark-overlay, .p-overlay {
-          font-size: 78px;
-          color: #000;
-          transform: translate(-10px, -32px);
-          
-      }
-
-      .apartment-marker, .autolock-marker {
-          display: flex; /* これらはtextContentを中央揃えにするために必要 */
-          justify-content: center;
-          align-items: center;
-          font-weight: bold;
-      }
-      .apartment-marker {
-          background-color: white;
-          color: #007BFF;
-          font-size: 54px;
-      }
-      .autolock-marker {
-          background-color: white;
-          color: #6f42c1;
-          font-size: 50px;
-      }
-
-      /* --- マーカー更新中スタイル --- */
-      .spinner {
-          border: 8px solid rgba(255, 255, 255, 0.3); /* 薄いボーダー */
-          border-radius: 50%;
-          border-top: 8px solid #ffffff; /* スピナーの色 */
-          width: 64px;
-          height: 64px;
-          animation: spin 1s linear infinite;
-          display: none; /* 初期状態は非表示 */
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          margin-top: -32px; /* heightの半分 */
-          margin-left: -32px; /* widthの半分 */
-      }
-
-      @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-      }
-
-      /* 更新中クラスが付いたマーカーのスタイル */
-      .css-marker.is-updating {
-          pointer-events: none; /* 更新中はクリックできないようにする */
-          opacity: 0.7; /* 少し半透明にする */
-      }
-
-      /* 更新中は他のオーバーレイ（文字、✓、P）を隠す */
-      .css-marker.is-updating .overlay {
-          display: none !important;
-      }
-      
-      /* 更新中クラスが付いたらスピナーを表示 */
-      .css-marker.is-updating .spinner {
-          display: block;
-      }
-      
-      /* 部屋リストのボタンが無効化された際のスタイル */
-      .room-item-actions button:disabled {
-          cursor: not-allowed;
-          opacity: 0.6;
-      }
-      /* --- マーカー更新中スタイル ここまで--- */
-
-      /* --- Googleマップの地図/航空写真ボタンのスタイル上書き --- */
-      /* ボタンを格納しているコンテナの位置調整 */
-      /* ★ 起点(top)を画面上端(0px)から「変数」の位置まで一気に引き下ろす */
-      .gm-style-mtc-bbw {
-          position: absolute !important;
-          top: var(--left-top) !important;      /* これで右ボタンと起点が揃います */
-          left: 10px !important;
-          margin: 0 !important;                     /* Googleの余計なマージンをリセット */
-          /* ★【追加】領域をボタンの高さに合わせるための設定 */
-          display: flex !important;
-          flex-direction: row !important;      /* 横並びを確定 */
-          align-items: flex-start !important;  /* ★中身（ボタン）を一番上に寄せる */
-          height: auto !important;             /* 高さを自動（中身に合わせる）にする */
-          min-height: 0 !important;            /* Googleが設定している最小高さを解除 */
-          padding: 0 !important;               /* 余計な内側余白を消す */
-      }
-      
-      /* 補足情報がない場合 */
-      body.no-sub-info .gm-style-mtc-bbw {
-          top: var(--left-top-no-sub) !important;
-      }
-
-      /* 中の構造も高さを最小限にする */
-      .gm-style-mtc {
-          margin: 0 !important;
-          padding: 0 !important;
-          height: auto !important;            /* ★高さを自動（最小）にする */
-          display: flex !important;           /* ★中身を制御するためにflex化 */
-          align-items: flex-start !important; /* ★中身のボタンを一番上に寄せる */
-	  }
-      /* ★★★ ボタン自体のスタイルをより強力に指定 ★★★ */
-      /* div.gm-style-mtc > button のように、直接の子要素を指定して優先度を上げる */
-      div.gm-style-mtc > button {
-		  margin: 0 !important;               /* ボタンの外側の余白を消す */
-          height: auto !important; /* 高さはpaddingに任せる */
-          width: auto !important;   
-          padding: var(--button-padding) !important; /* 変数でサイズを制御 */
-          background-color: #fff !important;
-          border: none !important; /* デフォルトの境界線をリセット */
-          box-shadow: 0 2px 6px rgba(0,0,0,.3) !important;
-          cursor: pointer !important;
-          
-          /* ★★★ 文字のスタイルを最優先で指定 ★★★ */
-          font-family: Roboto, sans-serif !important;
-          font-size: var(--main-font-size) !important; /* 変数でフォントサイズを制御 */
-          font-weight: 500 !important;
-          color: #222 !important;
-          line-height: 1.2 !important; /* 行の高さを調整 */
-          display: block !important; /* displayプロパティも念のため指定 */
-      }
-
-      /* ボタン間の仕切り線を非表示にする */
-      .gm-style-mtc div + div {
-          display: none !important;
-      }
-      
-      /* 2つのボタンを隣接させるための調整 */
-      .gm-style-mtc button:first-of-type {
-          border-radius: 3px 0 0 3px !important;
-          margin-right: 0 !important;
-      }
-      .gm-style-mtc button:last-of-type {
-          border-radius: 0 3px 3px 0 !important;
-          border-left: 1px solid #ddd !important; /* 間に薄い線を入れる */
-      }
-
-      /* 選択されているボタンのスタイル */
-      .gm-style-mtc button[aria-pressed="true"] { /* ★セレクタをより正確に */
-          background-color: #e0e0e0 !important; 
-          color: #000 !important;
-      }
-      
-      /* ホバー時のスタイル */
-      .gm-style-mtc button:not([aria-pressed="true"]):hover {
-          background-color: #f4f4f4 !important; 
-      }
-
-       /* ★【追加】補足情報がない場合に、右上のボタン群の位置を上に調整する */
-      body.no-sub-info .gm-style-mtc {
-        margin: var(--controls-top-no-sub) 0 0 10px !important; /* ★変更 */
-      }
-
-      /* --- Googleマップの地図/航空写真ボタンのスタイル上書きここまで --- */
-
-      /* --- 通信ステータス通知バーのスタイル --- */
-      .connection-status {
-          position: fixed;
-          top: 0; /* 画面最上部 */
-          left: 0;
-          width: 100%;
-          padding: 12px;
-          text-align: center;
-          font-size: 32px; /* スマホで見やすいサイズ */
-          font-weight: bold;
-          color: white;
-          z-index: 9999; /* 最前面に表示 */
-          transition: transform 0.3s ease-in-out;
-      }
-      
-      /* オフライン時: 赤 */
-      .status-offline {
-          background-color: #dc3545; /* 赤 */
-          display: block !important;
-      }
-      
-      /* 同期中: 黄色 (文字は黒) */
-      .status-syncing {
-          background-color: #ffc107; /* 黄 */
-          color: #000;
-          display: block !important;
-      }
-      
-      /* 完了: 緑 */
-      .status-online {
-          background-color: #28a745; /* 緑 */
-          display: block !important;
-      }
-
-      /* --- 共通の基本サイズ（主にPC・iPadなどの大きな画面用） --- */
+	/* =========================================
+	   1. 変数定義 (PC・スマホ対応)
+	========================================= */
 	:root {
-	  --main-font-size: 32px;    /* 基本の文字サイズ */
-	  --title-font-size: 40px;   /* タイトルの文字サイズ */
+	  --main-font-size: 32px;
+	  --title-font-size: 40px;
 	  --button-padding: 12px 24px;
-	  --marker-size: 80px;       /* マーカーの大きさ */
-	  --marker-font: 48px;       /* マーカー内の文字 */
-	  /* ★左側（地図・航空写真）の高さ */
+	  --marker-size: 80px;
+	  --marker-font: 48px;
+	  
 	  --left-top: 115px;
 	  --left-top-no-sub: 75px;
-	
-	  /* ★右側（初期位置・現在地）の高さ */
 	  --right-top: 115px;
 	  --right-top-no-sub: 75px;
 	}
 	
-	/* --- 【スマホ用】画面の横幅が 600px 以下の時の設定 --- */
 	@media screen and (max-width: 600px) {
 	  :root {
-		--main-font-size: 18px;    /* スマホでは文字を小さく */
-		--title-font-size: 24px;   /* タイトルもスマホサイズに */
-		--button-padding: 2px 6px;
-		--marker-size: 48px;       /* マーカーを指で押しやすい最小サイズに */
-		--marker-font: 35px;
-		/* ★スマホでの左側の高さ調整はここ */
+	    --main-font-size: 18px;
+	    --title-font-size: 24px;
+	    --button-padding: 2px 6px;
+	    --marker-size: 48px;
+	    --marker-font: 35px;
+	    
 	    --left-top: 90px;
 	    --left-top-no-sub: 55px;
-	
-	    /* ★スマホでの右側の高さ調整はここ */
 	    --right-top: 90px;
 	    --right-top-no-sub: 55px;
 	  }
 	}
 	
-	/* --- 各要素に「変数」を適用する --- */
+	/* =========================================
+	   2. ベーススタイル
+	========================================= */
+	*, *::before, *::after {
+	  box-sizing: border-box;
+	}
+	
+	html, body {
+	  height: 100%;
+	  margin: 0;
+	  padding: 0;
+	  font-family: 'Roboto', sans-serif;
+	}
+	
+	#map {
+	  height: 100%;
+	  z-index: 1;
+	}
+	
+	/* =========================================
+	   3. ヘッダー (タイトル・通信ステータス)
+	========================================= */
+	#page-title {
+	  position: absolute;
+	  top: 0;
+	  left: 0;
+	  width: 100%;
+	  z-index: 5;
+	  background-color: rgba(255, 255, 255, 0.85);
+	  padding: 8px 24px;
+	  margin: 0;
+	  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+	  display: flex;
+	  flex-direction: column;
+	  gap: 4px;
+	}
+	
 	.main-title {
-	  font-size: var(--title-font-size) !important;
+	  font-size: var(--title-font-size);
+	  font-weight: bold;
+	  text-align: center;
 	}
 	
 	.title-info {
-	  font-size: var(--main-font-size) !important;
+	  width: 100%;
+	  text-align: right;
+	  font-size: var(--main-font-size);
+	  font-weight: normal;
+	}
+	
+	.connection-status {
+	  position: fixed;
+	  top: 0;
+	  left: 0;
+	  width: 100%;
+	  padding: 12px;
+	  text-align: center;
+	  font-size: var(--main-font-size);
+	  font-weight: bold;
+	  color: white;
+	  z-index: 9999;
+	  transition: transform 0.3s ease-in-out;
+	}
+	
+	.status-offline { background-color: #dc3545; display: block !important; }
+	.status-syncing { background-color: #ffc107; color: #000; display: block !important; }
+	.status-online  { background-color: #28a745; display: block !important; }
+	
+	/* =========================================
+	   4. 地図上の各種コントロールボタン
+	========================================= */
+	.map-controls-right {
+	  position: absolute;
+	  top: var(--right-top);
+	  right: 10px;
+	  z-index: 5;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 10px;
+	}
+	body.no-sub-info .map-controls-right {
+	  top: var(--right-top-no-sub);
 	}
 	
 	.map-button, .bottom-left-button, .bottom-center-button {
-	  font-size: var(--main-font-size) !important;
-	  padding: var(--button-padding) !important;
+	  background-color: #fff;
+	  padding: var(--button-padding);
+	  border: none;
+	  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+	  cursor: pointer;
+	  font-size: var(--main-font-size);
+	  text-align: center;
+	  transition: background-color 0.2s;
 	}
 	
-	/* マーカーのサイズ調整 */
+	.map-button { border-radius: 3px; }
+	.map-button:hover { background-color: #f4f4f4; }
+	#stop-tracking-button { display: none; }
+	
+	.bottom-left-button {
+	  position: absolute;
+	  bottom: 10px;
+	  left: 10px;
+	  z-index: 5;
+	  border-radius: 3px;
+	}
+	.bottom-left-button:hover { background-color: #f4f4f4; }
+	
+	.bottom-center-button {
+	  position: absolute;
+	  bottom: 10px;
+	  left: 50%;
+	  transform: translateX(-50%);
+	  z-index: 5;
+	  border-radius: 8px;
+	  font-weight: bold;
+	  color: #333;
+	}
+	.bottom-center-button:hover { background-color: #e2e6ea; }
+	
+	/* =========================================
+	   5. モーダル (備考入力)
+	========================================= */
+	.modal-overlay {
+	  position: fixed;
+	  top: 0; left: 0;
+	  width: 100%; height: 100%;
+	  background-color: rgba(0,0,0,0.5);
+	  z-index: 10000;
+	  display: none;
+	  justify-content: center;
+	  align-items: center;
+	}
+	
+	.modal-box {
+	  background-color: #fff;
+	  width: 90%;
+	  max-width: 600px;
+	  border-radius: 8px;
+	  padding: 24px;
+	  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+	  display: flex;
+	  flex-direction: column;
+	  gap: 16px;
+	}
+	
+	.modal-title {
+	  margin: 0;
+	  font-size: var(--title-font-size);
+	  font-weight: bold;
+	  text-align: center;
+	}
+	
+	.modal-textarea {
+	  width: 100%;
+	  height: 300px;
+	  font-size: var(--main-font-size);
+	  padding: 12px;
+	  border: 1px solid #ccc;
+	  border-radius: 4px;
+	  resize: none;
+	}
+	.modal-textarea::placeholder {
+	  color: #999;
+	  opacity: 1;
+	}
+	
+	.modal-buttons {
+	  display: flex;
+	  justify-content: space-between;
+	  gap: 16px;
+	}
+	
+	.modal-btn {
+	  flex: 1;
+	  padding: 16px;
+	  font-size: var(--main-font-size);
+	  border: none;
+	  border-radius: 4px;
+	  cursor: pointer;
+	}
+	.modal-btn-cancel { background-color: #f8f9fa; border: 1px solid #ddd; color: #333; }
+	.modal-btn-send { background-color: #007bff; color: white; }
+	.modal-btn-send:disabled { background-color: #ccc; cursor: not-allowed; }
+	
+	/* =========================================
+	   6. ボトムシート (部屋リスト)
+	========================================= */
+	.bottom-sheet-container {
+	  position: fixed;
+	  bottom: 0; left: 0;
+	  width: 100%;
+	  max-height: 60%;
+	  background-color: white;
+	  box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+	  border-top-left-radius: 16px;
+	  border-top-right-radius: 16px;
+	  display: flex;
+	  flex-direction: column;
+	  transform: translateY(100%);
+	  transition: transform 0.3s ease-in-out;
+	  z-index: 1000;
+	}
+	.bottom-sheet-container.is-visible { transform: translateY(0); }
+	
+	.sheet-header {
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	  padding: 12px 16px;
+	  border-bottom: 1px solid #e0e0e0;
+	  flex-shrink: 0;
+	}
+	.sheet-header h3 {
+	  margin: 0;
+	  font-size: var(--title-font-size);
+	}
+	#close-sheet-button {
+	  background: none;
+	  border: none;
+	  font-size: calc(var(--title-font-size) * 2);
+	  cursor: pointer;
+	  padding: 0 8px;
+	}
+	
+	.sheet-content {
+	  overflow-y: auto;
+	  padding: 8px;
+	  flex-grow: 1;
+	}
+	
+	.room-item {
+	  display: flex;
+	  align-items: center;
+	  padding: 12px 8px;
+	  border-bottom: 1px solid #f0f0f0;
+	}
+	.room-item-name {
+	  flex-grow: 1;
+	  font-size: var(--main-font-size);
+	}
+	.room-item-actions button {
+	  margin-left: 8px;
+	  padding: var(--button-padding);
+	  font-size: var(--main-font-size);
+	  border: 1px solid #ccc;
+	  border-radius: 16px;
+	  background-color: #f8f9fa;
+	  cursor: pointer;
+	}
+	.room-item-actions button.active {
+	  background-color: #007bff;
+	  color: white;
+	  border-color: #007bff;
+	}
+	.room-item-actions button:disabled {
+	  cursor: not-allowed;
+	  opacity: 0.6;
+	}
+	
+	/* 部屋リストのステータス別スタイル */
+	.room-item.status-refused { background-color: #f8d7da; }
+	.room-item.status-refused .room-item-name { color: #721c24; font-weight: bold; }
+	
+	.room-item.status-long-term-aq { background-color: #fff3cd; }
+	.room-item.status-long-term-aq .room-item-name { color: #856404; }
+	
+	.room-item.status-long-term-as { background-color: #d4edda; }
+	.room-item.status-long-term-as .room-item-name { color: #155724; }
+	
+	.room-item.status-vacant { background-color: #e2e3e5; }
+	.room-item.status-vacant .room-item-name { color: #383d41; text-decoration: line-through; }
+	
+	/* =========================================
+	   7. マーカー関連
+	========================================= */
 	.css-marker {
-	  width: var(--marker-size) !important;
-	  height: var(--marker-size) !important;
+	  width: var(--marker-size);
+	  height: var(--marker-size);
+	  border-radius: 50%;
+	  position: relative;
+	  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+	  cursor: pointer;
+	}
+	
+	.overlay {
+	  position: absolute;
+	  top: 0; left: 0;
+	  width: 100%; height: 100%;
+	  border-radius: 50%;
+	  color: #000;
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+	  display: none;
 	}
 	
 	.marker-text {
-	  font-size: var(--marker-font) !important;
+	  font-size: var(--marker-font);
 	}
 	
-	/* 備考入力モーダルの文字 */
-	.modal-title { font-size: var(--title-font-size); }
-	.modal-textarea { font-size: var(--main-font-size); }
-	.modal-btn { font-size: var(--main-font-size); }
-	
-	/* --- ここから：その他の要素も変数に合わせて自動調整させる一括上書き --- */
-	
-	/* 1. Googleマップの「地図 / 航空写真」ボタン */
-	div.gm-style-mtc > button {
-	  font-size: var(--main-font-size) !important;
-	  padding: var(--button-padding) !important;
-	}
-	
-	/* 2. ボトムシート（部屋リスト）と×ボタン */
-	.sheet-header h3 { font-size: var(--title-font-size) !important; }
-	#close-sheet-button { font-size: calc(var(--title-font-size) * 2) !important; }
-	.room-item-name { font-size: var(--main-font-size) !important; }
-	.room-item-actions button { 
-	  font-size: var(--main-font-size) !important; 
-	  padding: var(--button-padding) !important;
-	}
-	
-	/* 3. マーカー上の「✓」と「P」マーク、アパート等の文字 */
-	/* calc() を使って、マーカーの文字サイズに比例して自動計算させます */
 	.checkmark-overlay, .p-overlay {
-	  font-size: calc(var(--marker-font) * 1.2) !important;
-	  /* スマホとPCで位置ズレを防ぐため、固定のpxではなく % で位置調整 */
-	  transform: translate(-10%, -30%) !important; 
+	  font-size: calc(var(--marker-font) * 1.2);
+	  transform: translate(-10%, -30%);
 	}
-	.apartment-marker { font-size: calc(var(--marker-font) * 0.8) !important; }
-	.autolock-marker { font-size: calc(var(--marker-font) * 0.75) !important; }
 	
-	/* 4. マーカー更新中のスピナー（ぐるぐる） */
+	.apartment-marker, .autolock-marker {
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+	  font-weight: bold;
+	}
+	.apartment-marker {
+	  background-color: white;
+	  color: #007BFF;
+	  font-size: calc(var(--marker-font) * 0.8);
+	}
+	.autolock-marker {
+	  background-color: white;
+	  color: #6f42c1;
+	  font-size: calc(var(--marker-font) * 0.75);
+	}
+	
+	/* マーカー更新中 (スピナー) */
 	.spinner {
-	  width: calc(var(--marker-size) * 0.7) !important;
-	  height: calc(var(--marker-size) * 0.7) !important;
-	  margin-top: calc(var(--marker-size) * -0.35) !important;
-	  margin-left: calc(var(--marker-size) * -0.35) !important;
+	  border: 8px solid rgba(255, 255, 255, 0.3);
+	  border-radius: 50%;
+	  border-top: 8px solid #ffffff;
+	  width: calc(var(--marker-size) * 0.7);
+	  height: calc(var(--marker-size) * 0.7);
+	  animation: spin 1s linear infinite;
+	  display: none;
+	  position: absolute;
+	  top: 50%; left: 50%;
+	  margin-top: calc(var(--marker-size) * -0.35);
+	  margin-left: calc(var(--marker-size) * -0.35);
 	}
 	
-	/* 5. 画面上部の通信ステータスバー */
-	.connection-status {
-	  font-size: var(--main-font-size) !important;
+	@keyframes spin {
+	  0% { transform: rotate(0deg); }
+	  100% { transform: rotate(360deg); }
 	}
-
-	/* --- ポップアップ（InfoWindow）のスタイル --- */
-   /* --- ポップアップ（InfoWindow）のスタイル --- */
-  .info-window-content {
+	
+	.css-marker.is-updating {
+	  pointer-events: none;
+	  opacity: 0.7;
+	}
+	.css-marker.is-updating .overlay {
+	  display: none !important;
+	}
+	.css-marker.is-updating .spinner {
+	  display: block;
+	}
+	
+	/* =========================================
+	   8. インフォウィンドウ (ポップアップ)
+	========================================= */
+	.info-window-content {
 	  padding: 8px;
 	  font-family: 'Roboto', sans-serif;
-  }
-  .info-window-title {
-          margin: 0 0 12px 0 !important;
-          font-size: var(--title-font-size) !important;
-          font-weight: bold !important;
-          line-height: 1.2 !important;
-  }
-  .info-window-link {
+	}
+	.info-window-title {
+	  margin: 0 0 12px 0;
+	  font-size: var(--title-font-size);
+	  font-weight: bold;
+	  line-height: 1.2;
+	}
+	.info-window-link {
 	  display: inline-block;
-	  padding: var(--button-padding) !important;
+	  padding: var(--button-padding);
 	  background-color: #007bff;
 	  color: white;
 	  text-decoration: none;
 	  border-radius: 5px;
-	  font-size: var(--main-font-size) !important;
-  }
-  .info-window-text {
+	  font-size: var(--main-font-size);
+	}
+	.info-window-text {
 	  margin: 0;
 	  background-color: #f0f0f0;
 	  padding: 8px;
 	  border-radius: 4px;
-	  font-size: var(--main-font-size) !important;
-  }
+	  font-size: var(--main-font-size);
+	}
 	
-	/* --- ここまで --- */
-
-    </style>
+	/* =========================================
+	   9. GoogleマップUI 上書き強制設定
+	   ※ Googleのインラインスタイルに勝つため !important 必須
+	========================================= */
+	.gm-style-mtc-bbw {
+	  position: absolute !important;
+	  top: var(--left-top) !important;
+	  left: 10px !important;
+	  margin: 0 !important;
+	  display: flex !important;
+	  flex-direction: row !important;
+	  align-items: flex-start !important;
+	  height: auto !important;
+	  min-height: 0 !important;
+	  padding: 0 !important;
+	}
+	
+	body.no-sub-info .gm-style-mtc-bbw {
+	  top: var(--left-top-no-sub) !important;
+	}
+	
+	.gm-style-mtc {
+	  margin: 0 !important;
+	  padding: 0 !important;
+	  height: auto !important;
+	  display: flex !important;
+	  align-items: flex-start !important;
+	}
+	
+	div.gm-style-mtc > button {
+	  margin: 0 !important;
+	  height: auto !important;
+	  width: auto !important;
+	  padding: var(--button-padding) !important;
+	  background-color: #fff !important;
+	  border: none !important;
+	  box-shadow: 0 2px 6px rgba(0,0,0,.3) !important;
+	  cursor: pointer !important;
+	  font-family: Roboto, sans-serif !important;
+	  font-size: var(--main-font-size) !important;
+	  font-weight: 500 !important;
+	  color: #222 !important;
+	  line-height: 1.2 !important;
+	  display: block !important;
+	}
+	
+	.gm-style-mtc div + div {
+	  display: none !important;
+	}
+	
+	.gm-style-mtc button:first-of-type {
+	  border-radius: 3px 0 0 3px !important;
+	  margin-right: 0 !important;
+	}
+	.gm-style-mtc button:last-of-type {
+	  border-radius: 0 3px 3px 0 !important;
+	  border-left: 1px solid #ddd !important;
+	}
+	
+	.gm-style-mtc button[aria-pressed="true"] {
+	  background-color: #e0e0e0 !important;
+	  color: #000 !important;
+	}
+	
+	.gm-style-mtc button:not([aria-pressed="true"]):hover {
+	  background-color: #f4f4f4 !important;
+	}
+	</style>
   </head>
   <body>
     <div id="page-title">
