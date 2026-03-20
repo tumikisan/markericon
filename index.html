@@ -1271,7 +1271,6 @@
 
         // ★★★ ここの判定ロジックを修正 ★★★
         let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
-        //let textContent = markerData.name || "?";
 
         let rawName = markerData.n || "?";
         // ★【追加】読点「、」やスペースを削除する（「㊿、」→「㊿」、「51」→「51」になる）
@@ -1560,7 +1559,7 @@
               // 2. InfoWindowに表示するHTMLコンテンツを作成
               let contentString = `
                   <div style="font-size: 48px; font-family: sans-serif; padding: 10px;">
-                      <h4 style="margin: 0 0 10px 0;">${markerData.name}</h4>
+                      <h4 style="margin: 0 0 10px 0;">${markerData.n}</h4>
               `;
 
               // 3. 有効なURLがある場合のみ、リンクボタンを追加
