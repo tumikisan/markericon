@@ -11,8 +11,8 @@
 	  --main-font-size: 32px;
 	  --title-font-size: 40px;
 	  --button-padding: 12px 24px;
-	  --marker-size: 80px;
-	  --marker-font: 48px;
+	  --marker-size: 48px;
+	  --marker-font: 35px;
 	  
 	  --left-top: 130px;
 	  --left-top-no-sub: 75px;
@@ -349,6 +349,7 @@
 	
 	.marker-text {
 	  font-size: var(--marker-font);
+	  font-weight: bold;
 	}
 	
 	.checkmark-overlay, .p-overlay {
@@ -1189,7 +1190,7 @@
 		}
         // ★★★ 文字数に応じてフォントサイズを調整する ★★★
         // 1文字なら元の72px、2文字以上（51など）なら52pxに縮小し、文字間を少し詰める
-        const fontSizeStyle = textContent.length > 1 ? 'font-size: 52px; letter-spacing: -3px;' : '';
+        const fontSizeStyle = textContent.length > 1 ? 'font-size: 35px; letter-spacing: -3px;' : '';
 
          // ★★★ innerHTMLの生成を一度で行う ★★★
         //マーカーの使用文字
