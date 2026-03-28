@@ -927,34 +927,44 @@
               printButton.addEventListener('click', () => {
                   if (!map) return;
                   
-                  // 1. 現在見ている中心座標を記憶する
                   const currentCenter = map.getCenter();
                   
-                  // 2. 印刷準備状態にする（CSSで地図を30%用の巨大サイズに変更）
+                  // 1. 印刷準備状態にする（CSSで地図を巨大サイズに変更）
                   document.body.classList.add('is-printing');
                   
-                  // 3. マップのサイズが変わったことを強制認識させ、中心を合わせ直す
+                  // 2. マップのサイズが変わったことを強制認識させ、中心を合わせ直す
                   google.maps.event.trigger(map, 'resize');
                   map.setCenter(currentCenter);
                   
-                  // 4. ボタンのテキストを変更して待機中であることを示す
                   const originalText = printButton.textContent;
-                  printButton.textContent = "地図を生成中...";
+                  printButton.textContent = "背景画像を取得中...";
                   printButton.disabled = true;
 
-                  // 5. 広域になった分の地図画像（タイル）が読み込まれるのを待つ（1.5秒）
-                  setTimeout(() => {
-                      // 6. ブラウザの印刷ダイアログを呼び出す
-                      window.print();
+                  // 3. 印刷を実行する関数
+                  let isPrinted = false;
+                  const executePrint = () => {
+                      if (isPrinted) return; // 2回実行されるのを防ぐ
+                      isPrinted = true;
                       
-                      // 7. 印刷ダイアログが閉じられたら、画面を元の状態に戻す
-                      document.body.classList.remove('is-printing');
-                      google.maps.event.trigger(map, 'resize');
-                      map.setCenter(currentCenter);
-                      
-                      printButton.textContent = originalText;
-                      printButton.disabled = false;
-                  }, 1500); // タイル読み込みに1.5秒待機
+                      // ブラウザが画像を画面に貼り付ける猶予として最後に0.5秒だけ待つ
+                      setTimeout(() => {
+                          window.print();
+                          
+                          // 印刷ダイアログ終了後に元の状態に戻す
+                          document.body.classList.remove('is-printing');
+                          google.maps.event.trigger(map, 'resize');
+                          map.setCenter(currentCenter);
+                          
+                          printButton.textContent = originalText;
+                          printButton.disabled = false;
+                      }, 500);
+                  };
+
+                  // 4. Google Mapsが「すべてのタイル(背景)を読み込み終えた」ら印刷を実行
+                  google.maps.event.addListenerOnce(map, 'tilesloaded', executePrint);
+
+                  // 5. 保険の処理（電波が弱くて読み込みが終わらない場合、4秒後に強制的に開く）
+                  setTimeout(executePrint, 4000);
               });
           }
 
