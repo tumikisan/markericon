@@ -562,7 +562,7 @@
       const SPREADSHEET_IDS = idParam ? idParam.split(',') : [];
       const filterParam = params.get('filter'); // "long" など
       // キャッシュキーをフィルタ状態によって分ける
-      const CACHE_KEY = filterParam === 'long' ? 'main_long' : 'main';
+      const CACHE_KEY = filterParam ? `main_${filterParam}` : 'main';
       const WEB_APP_URL = "__PLACEHOLDER_WEB_APP_URL__";
       const SECRET_TOKEN = "__PLACEHOLDER_SECRET_TOKEN__";
       const YOUR_API_KEY = "__PLACEHOLDER_YOUR_API_KEY__";
@@ -1118,15 +1118,17 @@
         // この関数を定義することで、初期描画とクリック後の更新で同じロジックを使える
         function updateMarkerColor(div, statusAQ, statusAS) {
             let backgroundColor = "#ffffff"; // デフォルトの色
-            if (statusAQ === '長期') {
-                backgroundColor = "#FFC107"; // 黄色
-            } else if (statusAQ === '拒否') {
-                backgroundColor = "#DC3545"; // 赤色
-            } else if (statusAQ === '空') {
-                backgroundColor = "#343A40"; // 黒に近い色
-            } else if (statusAS === '長期') {
-                backgroundColor = "#28A745"; // 緑色
-            }
+			if (filterParam !== 'simple') {
+	            if (statusAQ === '長期') {
+	                backgroundColor = "#FFC107"; // 黄色
+	            } else if (statusAQ === '拒否') {
+	                backgroundColor = "#DC3545"; // 赤色
+	            } else if (statusAQ === '空') {
+	                backgroundColor = "#343A40"; // 黒に近い色
+	            } else if (statusAS === '長期') {
+	                backgroundColor = "#28A745"; // 緑色
+	            }
+			}
             div.style.backgroundColor = backgroundColor;
         }
         
@@ -1144,16 +1146,19 @@
         // ★【追加】読点「、」やスペースを削除する（「㊿、」→「㊿」、「51」→「51」になる）
         let textContent = rawName.replace(/[,\s]/g, '');
 
-        if (statusAQ === '長期') {
-            backgroundColor = "#FFC107"; // 黄色 (Bootstrapのwarning色)
-        } else if (statusAQ === '拒否') {
-            backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
-        } else if (statusAQ === '空') {
-            backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
-        } else if (statusAS === '長期') {
-            // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
-            backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
-        }
+		if (filterParam !== 'simple') {
+
+	        if (statusAQ === '長期') {
+	            backgroundColor = "#FFC107"; // 黄色 (Bootstrapのwarning色)
+	        } else if (statusAQ === '拒否') {
+	            backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
+	        } else if (statusAQ === '空') {
+	            backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
+	        } else if (statusAS === '長期') {
+	            // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
+	            backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
+	        }
+		}
         // ★★★ 文字数に応じてフォントサイズを調整する ★★★
         // 1文字なら元の72px、2文字以上（51など）なら52pxに縮小し、文字間を少し詰める
         const fontSizeStyle = textContent.length > 1 ? 'font-size: 52px; letter-spacing: -3px;' : '';
@@ -1201,13 +1206,23 @@
 
         // b. 初期状態の見た目を反映させる関数
         function updateAppearance(state) {
-            checkmarkOverlay.style.display = (state === STATE_CHECKED) ? 'flex' : 'none';
-            pOverlay.style.display = (state === STATE_P) ? 'flex' : 'none';
+            // ★変更: simpleモード時は強制的に非表示
+            if (filterParam === 'simple') {
+                checkmarkOverlay.style.display = 'none';
+                pOverlay.style.display = 'none';
+            } else {
+                checkmarkOverlay.style.display = (state === STATE_CHECKED) ? 'flex' : 'none';
+                pOverlay.style.display = (state === STATE_P) ? 'flex' : 'none';
+            }
         }
         updateAppearance(currentState); // 初期表示
 
         // c. クリックイベントリスナー
         markerDiv.addEventListener('click', async () => {
+			// ★追加: simpleモード時はクリックによるステータス変更を無効にする（閲覧専用）
+            if (filterParam === 'simple') {
+                return;
+            }
             // 更新中の場合は多重実行を防ぐ
             if (markerDiv.classList.contains('is-updating')) {
                 return;
@@ -1676,7 +1691,7 @@
                   action,
                   token: SECRET_TOKEN,
                   spreadsheetIds: SPREADSHEET_IDS, // ★ 配列を渡す
-                  filter: filterParam,             // ★ フィルター条件を渡す
+                  filter: filterParam === 'simple' ? null : filterParam,             // ★ フィルター条件を渡す
                   ...payload
               })
           });
