@@ -502,20 +502,38 @@
 	  background-color: #f4f4f4 !important;
 	}
 
-	 印刷時（PDF出力時）専用のスタイル（A4・倍率30%対応）
+	 /* =========================================
+	   印刷時（PDF出力時）専用のスタイル
+	   （CSSのtransformを使って縮小し、ブラウザ倍率は100%で印刷）
 	========================================= */
-	/* 印刷ボタンを押した時の一時的な巨大化（30%縮小される前の元サイズ） */
+	
+	/* 印刷ボタンを押した時に「巨大な地図（30%相当の広域）」を描画させる */
 	body.is-printing #map {
 	  position: absolute !important;
 	  top: 0 !important;
 	  left: 0 !important;
-	  /* A4横を倍率30%で出力するための逆算サイズに固定 */
-	  width: 3743px !important;
-	  height: 2646px !important;
+	  width: 3740px !important;
+	  height: 2640px !important;
 	  z-index: 9999;
 	}
 	
 	@media print {
+	  /* A4 横向き、マージンなしを指定 */
+	  @page {
+	    size: A4 landscape;
+	    margin: 0mm; 
+	  }
+	
+	  /* 用紙サイズ（A4相当）にガッチリ固定し、はみ出しによる改ページを禁止する */
+	  body, html {
+	    width: 1120px !important;
+	    height: 790px !important;
+	    margin: 0 !important;
+	    padding: 0 !important;
+	    overflow: hidden !important; /* 絶対にページ分割させない */
+	    background-color: white;
+	  }
+	
 	  /* 印刷に不要なボタンやUIを非表示にする */
 	  #page-title,
 	  .map-controls-right,
@@ -525,33 +543,24 @@
 	    display: none !important;
 	  }
 	
-	  /* A4 横向き、余白なしを指定 */
-	  @page {
-	    size: A4 landscape;
-	    margin: 0; 
-	  }
-	
-	  body, html {
-	    /* 印刷プレビュー時もサイズをガチガチに固定する */
-	    width: 3743px !important;
-	    height: 2646px !important;
-	    margin: 0;
-	    padding: 0;
-	    background-color: white;
-	  }
-	
+	  /* ★最重要：巨大な地図を、CSSの力で強制的に「0.3倍（30%）」に縮小して配置する */
 	  #map {
 	    position: absolute !important;
 	    top: 0 !important;
 	    left: 0 !important;
-	    width: 3743px !important;
-	    height: 2646px !important;
+	    width: 3740px !important;
+	    height: 2640px !important;
+	    
+	    /* 左上を基準にして30%に縮小 */
+	    transform: scale(0.3) !important;
+	    transform-origin: top left !important;
 	  }
 	
-	  /* 30%に縮小されることを考慮し、マーカー自体は少し大きめに設定 */
+	  /* コンテナごと0.3倍されるため、マーカーは少し大きめ(100px)に作っておく
+	     （100pxの0.3倍 = 印刷時は約30pxのサイズになります） */
 	  :root {
-	    --marker-size: 130px; 
-	    --marker-font: 72px; 
+	    --marker-size: 100px; 
+	    --marker-font: 60px; 
 	  }
 	}
 	</style>
