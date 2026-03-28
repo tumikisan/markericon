@@ -501,59 +501,6 @@
 	.gm-style-mtc button:not([aria-pressed="true"]):hover {
 	  background-color: #f4f4f4 !important;
 	}
-
-	 /* =========================================
-	   印刷時（PDF出力時）専用のスタイル
-	   （CSSのtransformを使って縮小し、ブラウザ倍率は100%で印刷）
-	========================================= */
-	
-	/* 印刷ボタンを押した時に「巨大な地図（30%相当の広域）」を描画させる */
-	body.is-printing #map {
-	  position: absolute !important;
-	  top: 0 !important;
-	  left: 0 !important;
-	  width: 3743px !important;
-	  height: 2646px !important;
-	  z-index: 9999;
-	}
-	
-	@media print {
-	  /* ★「size」の指定を削除して、ブラウザの印刷設定UIを復活させます */
-	  @page {
-	    margin: 5mm; 
-	  }
-	
-	  /* 印刷に不要なボタンやUIを非表示にする */
-	  #page-title,
-	  .map-controls-right,
-	  .bottom-left-container,
-	  .bottom-center-button,
-	  .connection-status {
-	    display: none !important;
-	  }
-	
-	  body, html {
-	    margin: 0;
-	    padding: 0;
-	    background-color: white;
-	  }
-	
-	  /* 印刷プレビュー時もサイズをpxで完全固定し、ズレを防ぐ */
-	  #map {
-	    position: absolute !important;
-	    top: 0 !important;
-	    left: 0 !important;
-	    width: 3743px !important;
-	    height: 2646px !important;
-	    /* ★前回あった transform の縮小処理は削除（ブラウザの倍率機能に任せる） */
-	  }
-	
-	  /* 30%に縮小されることを考慮し、マーカー自体は少し大きめに設定 */
-	  :root {
-	    --marker-size: 130px; 
-	    --marker-font: 72px; 
-	  }
-	}
 	</style>
   </head>
   <body>
@@ -570,7 +517,7 @@
   　</div>
     
     <div class="bottom-left-container">
-        <button id="print-map-button" class="bottom-left-btn">地図印刷</button>
+        <button id="open-sheet-button" class="bottom-left-btn">シートを開く</button>
         <button id="force-reload-button" class="bottom-left-btn">強制更新</button>
     </div>
 
@@ -921,50 +868,21 @@
               }
           });
 
-		  // ★★★ 地図印刷ボタンの処理（A4・倍率30%・ズレ防止対応版） ★★★
-          const printButton = document.getElementById('print-map-button');
-          if (printButton) {
-              printButton.addEventListener('click', () => {
-                  if (!map) return;
-                  
-                  const currentCenter = map.getCenter();
-                  
-                  // 1. 印刷準備状態にする（CSSで地図を巨大サイズに変更）
-                  document.body.classList.add('is-printing');
-                  
-                  // 2. マップのサイズが変わったことを強制認識させ、中心を合わせ直す
-                  google.maps.event.trigger(map, 'resize');
-                  map.setCenter(currentCenter);
-                  
-                  const originalText = printButton.textContent;
-                  printButton.textContent = "背景画像を取得中...";
-                  printButton.disabled = true;
-
-                  // 3. 印刷を実行する関数
-                  let isPrinted = false;
-                  const executePrint = () => {
-                      if (isPrinted) return; // 2回実行されるのを防ぐ
-                      isPrinted = true;
+		  // ★★★ シートを開くボタンの処理 ★★★
+          const openSheetButton = document.getElementById('open-sheet-button');
+          if (openSheetButton) {
+              openSheetButton.addEventListener('click', () => {
+                  // URLパラメータから読み込んでいるスプレッドシートIDの配列を確認
+                  if (SPREADSHEET_IDS && SPREADSHEET_IDS.length > 0) {
+                      // 1つ目のIDを使用してスプレッドシートのURLを作成
+                      const sheetId = SPREADSHEET_IDS[0];
+                      const sheetUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
                       
-                      // ブラウザが画像を画面に貼り付ける猶予として最後に0.5秒だけ待つ
-                      setTimeout(() => {
-                          window.print();
-                          
-                          // 印刷ダイアログ終了後に元の状態に戻す
-                          document.body.classList.remove('is-printing');
-                          google.maps.event.trigger(map, 'resize');
-                          map.setCenter(currentCenter);
-                          
-                          printButton.textContent = originalText;
-                          printButton.disabled = false;
-                      }, 500);
-                  };
-
-                  // 4. Google Mapsが「すべてのタイル(背景)を読み込み終えた」ら印刷を実行
-                  google.maps.event.addListenerOnce(map, 'tilesloaded', executePrint);
-
-                  // 5. 保険の処理（電波が弱くて読み込みが終わらない場合、4秒後に強制的に開く）
-                  setTimeout(executePrint, 4000);
+                      // 新しいタブ（またはウィンドウ）で開く
+                      window.open(sheetUrl, '_blank');
+                  } else {
+                      alert('スプレッドシートのIDが見つかりません。');
+                  }
               });
           }
 
