@@ -512,26 +512,15 @@
 	  position: absolute !important;
 	  top: 0 !important;
 	  left: 0 !important;
-	  width: 3740px !important;
-	  height: 2640px !important;
+	  width: 3743px !important;
+	  height: 2646px !important;
 	  z-index: 9999;
 	}
 	
 	@media print {
-	  /* A4 横向き、マージンなしを指定 */
+	  /* ★「size」の指定を削除して、ブラウザの印刷設定UIを復活させます */
 	  @page {
-	    size: A4 landscape;
-	    margin: 0mm; 
-	  }
-	
-	  /* 用紙サイズ（A4相当）にガッチリ固定し、はみ出しによる改ページを禁止する */
-	  body, html {
-	    width: 1120px !important;
-	    height: 790px !important;
-	    margin: 0 !important;
-	    padding: 0 !important;
-	    overflow: hidden !important; /* 絶対にページ分割させない */
-	    background-color: white;
+	    margin: 5mm; 
 	  }
 	
 	  /* 印刷に不要なボタンやUIを非表示にする */
@@ -543,24 +532,26 @@
 	    display: none !important;
 	  }
 	
-	  /* ★最重要：巨大な地図を、CSSの力で強制的に「0.3倍（30%）」に縮小して配置する */
+	  body, html {
+	    margin: 0;
+	    padding: 0;
+	    background-color: white;
+	  }
+	
+	  /* 印刷プレビュー時もサイズをpxで完全固定し、ズレを防ぐ */
 	  #map {
 	    position: absolute !important;
 	    top: 0 !important;
 	    left: 0 !important;
-	    width: 3740px !important;
-	    height: 2640px !important;
-	    
-	    /* 左上を基準にして30%に縮小 */
-	    transform: scale(0.3) !important;
-	    transform-origin: top left !important;
+	    width: 3743px !important;
+	    height: 2646px !important;
+	    /* ★前回あった transform の縮小処理は削除（ブラウザの倍率機能に任せる） */
 	  }
 	
-	  /* コンテナごと0.3倍されるため、マーカーは少し大きめ(100px)に作っておく
-	     （100pxの0.3倍 = 印刷時は約30pxのサイズになります） */
+	  /* 30%に縮小されることを考慮し、マーカー自体は少し大きめに設定 */
 	  :root {
-	    --marker-size: 100px; 
-	    --marker-font: 60px; 
+	    --marker-size: 130px; 
+	    --marker-font: 72px; 
 	  }
 	}
 	</style>
