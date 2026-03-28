@@ -486,6 +486,59 @@
 	.gm-style-mtc button:not([aria-pressed="true"]):hover {
 	  background-color: #f4f4f4 !important;
 	}
+
+	 印刷時（PDF出力時）専用のスタイル（A4・倍率30%対応）
+	========================================= */
+	/* 印刷ボタンを押した時の一時的な巨大化（30%縮小される前の元サイズ） */
+	body.is-printing #map {
+	  position: absolute !important;
+	  top: 0 !important;
+	  left: 0 !important;
+	  /* A4横を倍率30%で出力するための逆算サイズに固定 */
+	  width: 3743px !important;
+	  height: 2646px !important;
+	  z-index: 9999;
+	}
+	
+	@media print {
+	  /* 印刷に不要なボタンやUIを非表示にする */
+	  #page-title,
+	  .map-controls-right,
+	  .bottom-left-container,
+	  .bottom-center-button,
+	  .connection-status {
+	    display: none !important;
+	  }
+	
+	  /* A4 横向き、余白なしを指定 */
+	  @page {
+	    size: A4 landscape;
+	    margin: 0; 
+	  }
+	
+	  body, html {
+	    /* 印刷プレビュー時もサイズをガチガチに固定する */
+	    width: 3743px !important;
+	    height: 2646px !important;
+	    margin: 0;
+	    padding: 0;
+	    background-color: white;
+	  }
+	
+	  #map {
+	    position: absolute !important;
+	    top: 0 !important;
+	    left: 0 !important;
+	    width: 3743px !important;
+	    height: 2646px !important;
+	  }
+	
+	  /* 30%に縮小されることを考慮し、マーカー自体は少し大きめに設定 */
+	  :root {
+	    --marker-size: 130px; 
+	    --marker-font: 72px; 
+	  }
+	}
 	</style>
   </head>
   <body>
@@ -849,6 +902,43 @@
                   map.setZoom(20);
               }
           });
+
+		  // ★★★ 地図印刷ボタンの処理（A4・倍率30%・ズレ防止対応版） ★★★
+          const printButton = document.getElementById('print-map-button');
+          if (printButton) {
+              printButton.addEventListener('click', () => {
+                  if (!map) return;
+                  
+                  // 1. 現在見ている中心座標を記憶する
+                  const currentCenter = map.getCenter();
+                  
+                  // 2. 印刷準備状態にする（CSSで地図を30%用の巨大サイズに変更）
+                  document.body.classList.add('is-printing');
+                  
+                  // 3. マップのサイズが変わったことを強制認識させ、中心を合わせ直す
+                  google.maps.event.trigger(map, 'resize');
+                  map.setCenter(currentCenter);
+                  
+                  // 4. ボタンのテキストを変更して待機中であることを示す
+                  const originalText = printButton.textContent;
+                  printButton.textContent = "地図を生成中...";
+                  printButton.disabled = true;
+
+                  // 5. 広域になった分の地図画像（タイル）が読み込まれるのを待つ（1.5秒）
+                  setTimeout(() => {
+                      // 6. ブラウザの印刷ダイアログを呼び出す
+                      window.print();
+                      
+                      // 7. 印刷ダイアログが閉じられたら、画面を元の状態に戻す
+                      document.body.classList.remove('is-printing');
+                      google.maps.event.trigger(map, 'resize');
+                      map.setCenter(currentCenter);
+                      
+                      printButton.textContent = originalText;
+                      printButton.disabled = false;
+                  }, 1500); // タイル読み込みに1.5秒待機
+              });
+          }
 
           startButton.addEventListener("click", () => {
               if (watchId !== null) return;
