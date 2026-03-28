@@ -438,7 +438,7 @@
 	   9. GoogleマップUI 上書き強制設定
 	   ※ Googleのインラインスタイルに勝つため !important 必須
 	========================================= */
-	.gm-style-mtc-bbw {
+	body:not(.mode-simple) .gm-style-mtc-bbw {
 	  position: absolute !important;
 	  top: var(--left-top) !important;
 	  left: 10px !important;
@@ -451,11 +451,11 @@
 	  padding: 0 !important;
 	}
 	
-	body.no-sub-info .gm-style-mtc-bbw {
+	body:not(.mode-simple).no-sub-info .gm-style-mtc-bbw {
 	  top: var(--left-top-no-sub) !important;
 	}
 	
-	.gm-style-mtc {
+	body:not(.mode-simple) .gm-style-mtc {
 	  margin: 0 !important;
 	  padding: 0 !important;
 	  height: auto !important;
@@ -463,7 +463,7 @@
 	  align-items: flex-start !important;
 	}
 	
-	div.gm-style-mtc > button {
+	body:not(.mode-simple) div.gm-style-mtc > button {
 	  margin: 0 !important;
 	  height: auto !important;
 	  width: auto !important;
@@ -480,26 +480,46 @@
 	  display: block !important;
 	}
 	
-	.gm-style-mtc div + div {
+	body:not(.mode-simple) .gm-style-mtc div + div {
 	  display: none !important;
 	}
 	
-	.gm-style-mtc button:first-of-type {
+	body:not(.mode-simple) .gm-style-mtc button:first-of-type {
 	  border-radius: 3px 0 0 3px !important;
 	  margin-right: 0 !important;
 	}
-	.gm-style-mtc button:last-of-type {
+	body:not(.mode-simple) .gm-style-mtc button:last-of-type {
 	  border-radius: 0 3px 3px 0 !important;
 	  border-left: 1px solid #ddd !important;
 	}
 	
-	.gm-style-mtc button[aria-pressed="true"] {
+	body:not(.mode-simple) .gm-style-mtc button[aria-pressed="true"] {
 	  background-color: #e0e0e0 !important;
 	  color: #000 !important;
 	}
 	
-	.gm-style-mtc button:not([aria-pressed="true"]):hover {
+	body:not(.mode-simple) .gm-style-mtc button:not([aria-pressed="true"]):hover {
 	  background-color: #f4f4f4 !important;
+	}
+	/* =========================================
+	   10. シンプルモード(&filter=simple) 専用スタイル
+	========================================= */
+	/* 各種コントロールボタンを完全に非表示にする */
+	body.mode-simple .map-controls-right,
+	body.mode-simple .bottom-left-container,
+	body.mode-simple .bottom-left-button,
+	body.mode-simple .bottom-center-button {
+	  display: none !important;
+	}
+
+	/* デフォルトに戻した「地図/航空写真」ボタンが、タイトルバーの裏に隠れないように位置を下げる */
+	body.mode-simple .gm-style-mtc-bbw {
+	  margin-top: 60px !important;
+	}
+	@media screen and (max-width: 600px) {
+	  body.mode-simple .gm-style-mtc-bbw {
+	    margin-top: 45px !important;
+	  }
 	}
 	</style>
   </head>
@@ -561,8 +581,12 @@
     　const idParam = params.get('id'); // カンマ区切りの文字列
       const SPREADSHEET_IDS = idParam ? idParam.split(',') : [];
       const filterParam = params.get('filter'); // "long" など
-      // キャッシュキーをフィルタ状態によって分ける
-      const CACHE_KEY = filterParam ? `main_${filterParam}` : 'main';
+	      // キャッシュキーをフィルタ状態によって分ける
+	      const CACHE_KEY = filterParam ? `main_${filterParam}` : 'main';
+			// ★追加: シンプルモードの時は、CSS制御のためにbodyにクラスを付与する
+	      if (filterParam === 'simple') {
+	          document.body.classList.add('mode-simple');
+	      }
       const WEB_APP_URL = "__PLACEHOLDER_WEB_APP_URL__";
       const SECRET_TOKEN = "__PLACEHOLDER_SECRET_TOKEN__";
       const YOUR_API_KEY = "__PLACEHOLDER_YOUR_API_KEY__";
@@ -738,8 +762,12 @@
 
          // 補足情報の設定と表示制御
         if (subInfoElement) {
+			if (filterParam === 'simple') {
+                subInfoElement.textContent = '';
+                subInfoElement.style.display = 'none';
+                document.body.classList.add('no-sub-info');
             // trim()で空白文字のみの場合も「情報なし」と判定
-            if (subInfoText && subInfoText.trim() !== "") {
+            } else if (subInfoText && subInfoText.trim() !== "") {
                 // 補足情報がある場合
                 subInfoElement.textContent = subInfoText;
                 subInfoElement.style.display = 'block'; // 表示
@@ -766,7 +794,7 @@
                   gestureHandling: 'greedy',
                   disableDoubleClickZoom: true,
                   mapTypeControl: true, // MapTypeControlを有効にする
-                  mapTypeControlOptions: {
+                  mapTypeControlOptions: filterParam === 'simple' ? undefined : {
                   // ドロップダウンではなく、横並びのボタンにする
                   style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
                   // 位置を左上に指定
