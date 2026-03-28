@@ -119,7 +119,7 @@
 	  top: var(--right-top-no-sub);
 	}
 	
-	.map-button, .bottom-left-button, .bottom-center-button {
+	.map-button, .bottom-left-container, .bottom-center-button {
 	  background-color: #fff;
 	  padding: var(--button-padding);
 	  border: none;
@@ -134,14 +134,29 @@
 	.map-button:hover { background-color: #f4f4f4; }
 	#stop-tracking-button { display: none; }
 	
-	.bottom-left-button {
+	/* 変更: 左下ボタンを縦に並べるコンテナ */
+	.bottom-left-container {
 	  position: absolute;
 	  bottom: 10px;
 	  left: 10px;
 	  z-index: 5;
-	  border-radius: 3px;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 10px; /* ボタン同士の隙間 */
 	}
-	.bottom-left-button:hover { background-color: #f4f4f4; }
+	
+	.bottom-left-btn {
+	  background-color: #fff;
+	  padding: var(--button-padding);
+	  border: none;
+	  border-radius: 3px;
+	  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+	  cursor: pointer;
+	  font-size: var(--main-font-size);
+	  text-align: center;
+	  transition: background-color 0.2s;
+	}
+	.bottom-left-btn:hover { background-color: #f4f4f4; }
 	
 	.bottom-center-button {
 	  position: absolute;
@@ -554,7 +569,10 @@
     <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
   　</div>
     
-    <button id="force-reload-button" class="bottom-left-button">強制更新</button>
+    <div class="bottom-left-container">
+        <button id="print-map-button" class="bottom-left-btn">地図印刷</button>
+        <button id="force-reload-button" class="bottom-left-btn">強制更新</button>
+    </div>
 
 	<button id="report-error-button" class="bottom-center-button">備考記入</button>
 	  
