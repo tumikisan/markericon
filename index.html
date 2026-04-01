@@ -1366,10 +1366,10 @@
             };
         } else {
             // B8（区域）の場合のスタイル分け
-            // 判定基準: 面積100㎡(0.01ha)以上 または 周囲長70m以上
+            // 判定基準: 面積400㎡(0.04ha)以上 または 周囲長70m以上
             
             // ★条件を満たす場合（大きい区域）
-            if (area >= 100 || perimeter >= 70) {
+            if (area >= 400 || perimeter >= 70) {
                 polyOptions = {
                     paths: path,
                     strokeColor: "#FFFFFF", // 白枠
