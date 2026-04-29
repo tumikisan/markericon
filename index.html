@@ -1353,7 +1353,7 @@
         let polyOptions = {};
 
         // B7（外枠）かどうかの判定
-        if (polygonData.n === 'Boundary') {
+        if (polygonData.b === 1) {
             polyOptions = {
                 paths: path,
                 strokeColor: "#000000",
@@ -1368,8 +1368,19 @@
             // B8（区域）の場合のスタイル分け
             // 判定基準: 面積400㎡(0.04ha)以上 または 周囲長70m以上
             
-            // ★条件を満たす場合（大きい区域）
-            if (area >= 400 || perimeter >= 70) {
+            // ★軽量化対応: cプロパティの 1文字 で色を判定
+            const forceColor = polygonData.c;
+            let isWhite = false;
+
+            if (forceColor === 'w') {
+                isWhite = true; // 強制的に白
+            } else if (forceColor === 'b') {
+                isWhite = false; // 強制的に黒
+            } else {
+                isWhite = (area >= 400 || perimeter >= 70);
+            }
+            
+            if (isWhite) {
                 polyOptions = {
                     paths: path,
                     strokeColor: "#FFFFFF", // 白枠
