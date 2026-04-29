@@ -47,9 +47,21 @@
 	  margin: 0;
 	  padding: 0;
 	  font-family: 'Roboto', sans-serif;
+	  display: flex;             /* ★追加: Flexbox化 */
+	  flex-direction: column;    /* ★追加: 縦並びに */
+	  overflow: hidden;          /* ★追加: ページ全体の無駄なスクロールを防止 */
+	}
+
+	/* ★追加: 新しく作ったラッパーのスタイル */
+	#map-wrapper {
+	  position: relative;
+	  width: 100%;
+	  flex-grow: 1;  /* ★タイトルの残りの高さをすべて地図エリアにする */
+	  min-height: 0;
 	}
 	
 	#map {
+	  width: 100%;  /* ★追加 */
 	  height: 100%;
 	  z-index: 1;
 	}
@@ -58,7 +70,7 @@
 	   3. ヘッダー (タイトル・通信ステータス)
 	========================================= */
 	#page-title {
-	  position: absolute;
+	  position: relative;
 	  top: 0;
 	  left: 0;
 	  width: 100%;
@@ -108,15 +120,12 @@
 	========================================= */
 	.map-controls-right {
 	  position: absolute;
-	  top: var(--right-top);
+	  top: 10px;
 	  right: 10px;
 	  z-index: 5;
 	  display: flex;
 	  flex-direction: column;
 	  gap: 10px;
-	}
-	body.no-sub-info .map-controls-right {
-	  top: var(--right-top-no-sub);
 	}
 	
 	.map-button, .bottom-left-container, .bottom-center-button {
@@ -441,7 +450,7 @@
 	========================================= */
 	body:not(.mode-simple) .gm-style-mtc-bbw {
 	  position: absolute !important;
-	  top: var(--left-top) !important;
+	  top: 10px !important;
 	  left: 10px !important;
 	  margin: 0 !important;
 	  display: flex !important;
@@ -450,10 +459,6 @@
 	  height: auto !important;
 	  min-height: 0 !important;
 	  padding: 0 !important;
-	}
-	
-	body:not(.mode-simple).no-sub-info .gm-style-mtc-bbw {
-	  top: var(--left-top-no-sub) !important;
 	}
 	
 	body:not(.mode-simple) .gm-style-mtc {
@@ -515,11 +520,11 @@
 
 	/* デフォルトに戻した「地図/航空写真」ボタンが、タイトルバーの裏に隠れないように位置を下げる */
 	body.mode-simple .gm-style-mtc-bbw {
-	  margin-top: 60px !important;
+	  margin-top: 10px !important;
 	}
 	@media screen and (max-width: 600px) {
 	  body.mode-simple .gm-style-mtc-bbw {
-	    margin-top: 45px !important;
+	    margin-top: 10px !important;
 	  }
 	}
 	</style>
@@ -531,10 +536,11 @@
     </div>
     <div id="connection-status" class="connection-status" style="display: none;"></div>
 
-    <div class="map-controls-right">
-    <button id="reset-center-button" class="map-button">初期位置に戻る</button>
-    <button id="start-tracking-button" class="map-button">現在地表示</button>
-    <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
+    <div id="map-wrapper">
+        <div class="map-controls-right">
+            <button id="reset-center-button" class="map-button">初期位置に戻る</button>
+            <button id="start-tracking-button" class="map-button">現在地表示</button>
+            <button id="stop-tracking-button" class="map-button" style="display: none;">現在地非表示</button>
   　</div>
     
     <div class="bottom-left-container">
