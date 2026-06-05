@@ -744,7 +744,7 @@
 				subCenters = data.subCenters || []; // ★【追加】：サーバーから受け取ったデータを代入
 
               // 取得したデータをキャッシュ
-                await dbManager.cacheFeatures(CACHE_KEY, { features: features, initialCenter: centerPosition });
+                await dbManager.cacheFeatures(CACHE_KEY, { features: features, initialCenter: centerPosition, subCenters: subCenters });
                 console.log("Data cached to IndexedDB.");
 
                 // 溜まっていたキューを同期
