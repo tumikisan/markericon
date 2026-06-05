@@ -1182,12 +1182,13 @@
       // ===============================================
 
       // ★ マーカー生成を補助するヘルパー関数
-      function createAdvancedMarker(markerData, contentDiv) {
+      function createAdvancedMarker(markerData, contentDiv, zIndex = 100) {
           return new google.maps.marker.AdvancedMarkerElement({
               position: { lat: Number(markerData.y), lng: Number(markerData.x) },
               map: map,
               content: contentDiv,
-              title: markerData.n
+              title: markerData.n,
+			  zIndex: zIndex
           });
       }
       
@@ -1509,7 +1510,7 @@
           const displayText = apartmentData.k + "A"; 
           markerDiv.textContent = displayText;
         
-          const marker = createAdvancedMarker(apartmentData, markerDiv);
+          const marker = createAdvancedMarker(apartmentData, markerDiv, 100);
 
           // ★ クリックイベントでボトムシートを表示する関数を呼び出す
           marker.content.addEventListener('click', () => {
@@ -1528,7 +1529,8 @@
               position: { lat: markerData.y, lng: markerData.x },
               map: map,
               content: markerDiv,
-              title: markerData.n
+              title: markerData.n,
+			  zIndex: 100
           });
           // R列の値(linkUrl)をチェックする
           const potentialUrl = markerData.url;
