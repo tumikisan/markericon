@@ -507,6 +507,31 @@
 	body:not(.mode-simple) .gm-style-mtc button:not([aria-pressed="true"]):hover {
 	  background-color: #f4f4f4 !important;
 	}
+
+	/* 分割番号表示用ラベルスタイル */
+	.sub-center-label {
+	  background-color: rgba(0, 123, 255, 0.35); /* 半透過の青色 */
+	  color: rgba(255, 255, 255, 0.85);
+	  font-size: 80px;
+	  font-weight: bold;
+	  width: 140px;
+	  height: 140px;
+	  border-radius: 50%;
+	  display: flex;
+	  justify-content: center;
+	  align-items: center;
+	  pointer-events: none; /* ★クリック操作を完全に透過させる設定 */
+	  user-select: none;
+	  box-shadow: 0 0 15px rgba(0,0,0,0.15);
+	}
+	
+	@media screen and (max-width: 600px) {
+	  .sub-center-label {
+	    font-size: 40px;
+	    width: 70px;
+	    height: 70px;
+	  }
+	}
 	/* =========================================
 	   10. シンプルモード(&filter=simple) 専用スタイル
 	========================================= */
@@ -703,6 +728,7 @@
         let data = {}; // ★空のオブジェクトで初期化
         let features;
         let centerPosition;
+		let subCenters = []; // ★【追加】：各シートの分割番号表示用
 
         if (navigator.onLine) {
             try {
@@ -715,6 +741,7 @@
                // ★ サーバーから取得した中心座標を最優先で使う
                 centerPosition = data.initialCenter;
                 features = data.features;
+				subCenters = data.subCenters || []; // ★【追加】：サーバーから受け取ったデータを代入
 
               // 取得したデータをキャッシュ
                 await dbManager.cacheFeatures(CACHE_KEY, { features: features, initialCenter: centerPosition });
@@ -730,6 +757,7 @@
                 if (cachedData) {
                     features = cachedData.features;
                     centerPosition = cachedData.initialCenter; // キャッシュからも中心地を読み込む
+					subCenters = cachedData.subCenters || []; // ★【追加】
                 }
             }
         } else {
@@ -739,6 +767,7 @@
             if (cachedData) {
                 features = cachedData.features;
                 centerPosition = cachedData.initialCenter;
+				subCenters = cachedData.subCenters || []; // ★【追加】
             }
         }
 
@@ -813,6 +842,10 @@
 
              // グローバル変数に初期位置を保存
         initialCenterPosition = centerPosition;
+
+		if (subCenters && subCenters.length > 0) {
+            drawSubCenters(subCenters);
+        }
 
         if (!features) {
             // 中心座標はあるがマーカーデータがない場合（あり得る）
@@ -1083,6 +1116,26 @@
           );
           infoWindow.open(map);
       }
+
+	　// ★★★【ここから新規追加：drawSubCenters関数】★★★
+      function drawSubCenters(subCenters) {
+          subCenters.forEach(item => {
+              if (!item.num) return;
+              
+              const labelDiv = document.createElement("div");
+              labelDiv.className = "sub-center-label";
+              labelDiv.textContent = item.num;
+
+              // zIndexを低く設定し、ポリゴンより上・通常マーカーより下へ配置する
+              new google.maps.marker.AdvancedMarkerElement({
+                  position: { lat: Number(item.lat), lng: Number(item.lng) },
+                  map: map,
+                  content: labelDiv,
+                  zIndex: 4 // ポリゴン(1~3, 10)より上、かつ通常の各マーカーより下
+              });
+          });
+      }
+      // ★★★【追加ここまで】★★★
       
      // ★★★ 修正点2: drawFeatures は features 配列を直接受け取るように変更 ★★★
       function drawFeatures(features) { // 引数名を 'features' に変更して分かりやすく
@@ -1155,17 +1208,17 @@
         // この関数を定義することで、初期描画とクリック後の更新で同じロジックを使える
         function updateMarkerColor(div, statusAQ, statusAS) {
             let backgroundColor = "#ffffff"; // デフォルトの色
-			if (filterParam !== 'simple') {
-	            if (statusAQ === '長期') {
-	                backgroundColor = "#FFC107"; // 黄色
-	            } else if (statusAQ === '拒否') {
-	                backgroundColor = "#DC3545"; // 赤色
-	            } else if (statusAQ === '空') {
-	                backgroundColor = "#343A40"; // 黒に近い色
-	            } else if (statusAS === '長期') {
-	                backgroundColor = "#28A745"; // 緑色
-	            }
-			}
+		    if (statusAQ === '拒否') {
+		        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
+		    } else if (filterParam !== 'simple') {
+		        if (statusAQ === '長期') {
+		            backgroundColor = "#FFC107"; // 黄色
+		        } else if (statusAQ === '空') {
+		            backgroundColor = "#343A40"; // 黒に近い色
+		        } else if (statusAS === '長期') {
+		            backgroundColor = "#28A745"; // 緑色
+		        }
+		    }
             div.style.backgroundColor = backgroundColor;
         }
         
@@ -1183,18 +1236,16 @@
         // ★【追加】読点「、」やスペースを削除する（「㊿、」→「㊿」、「51」→「51」になる）
         let textContent = rawName.replace(/[,\s]/g, '');
 
-		if (filterParam !== 'simple') {
-
-	        if (statusAQ === '長期') {
-	            backgroundColor = "#FFC107"; // 黄色 (Bootstrapのwarning色)
-	        } else if (statusAQ === '拒否') {
-	            backgroundColor = "#DC3545"; // 赤色 (Bootstrapのdanger色)
-	        } else if (statusAQ === '空') {
-	            backgroundColor = "#343A40"; // 黒に近い色 (Bootstrapのdark色)
-	        } else if (statusAS === '長期') {
-	            // 上のAQの条件がどれも当てはまらなかった場合のみ、これが評価される
-	            backgroundColor = "#28A745"; // 緑色 (Bootstrapのsuccess色)
-	        }
+		if (statusAQ === '拒否') {
+        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
+    } else if (filterParam !== 'simple') {
+        if (statusAQ === '長期') {
+            backgroundColor = "#FFC107"; // 黄色
+        } else if (statusAQ === '空') {
+            backgroundColor = "#343A40"; // 黒に近い色
+        } else if (statusAS === '長期') {
+            backgroundColor = "#28A745"; // 緑色
+        }
 		}
         // ★★★ 文字数に応じてフォントサイズを調整する ★★★
         // 1文字なら元の72px、2文字以上（51など）なら52pxに縮小し、文字間を少し詰める
