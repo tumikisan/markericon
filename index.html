@@ -1214,7 +1214,7 @@
             let backgroundColor = "#ffffff"; // デフォルトの色
 		    if (statusAQ === '拒否') {
 		        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
-				} else if (statusAQ === '訪問可能') {
+				} else if (statusAQ === '拒否訪可') {
 		        backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
 		    } else if (filterParam !== 'simple') {
 		        if (statusAQ === '長期') {
@@ -1244,7 +1244,7 @@
 
 		if (statusAQ === '拒否') {
         backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
-			 } else if (statusAQ === '訪問可能') {
+			 } else if (statusAQ === '拒否訪可') {
             backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
     } else if (filterParam !== 'simple') {
         if (statusAQ === '長期') {
@@ -1612,7 +1612,7 @@
               // 優先順位に従って判定
               if (room.aq === '拒否') {
                   statusClass = 'status-refused';
-				  } else if (room.aq === '訪問可能') { // ★拒否の次に優先判定
+				  } else if (room.aq === '拒否訪可') { // ★拒否の次に優先判定
 				  statusClass = 'status-visitable';
               } else if (room.aq === '長期') {
 				  statusClass = 'status-long-term-aq';
@@ -1713,7 +1713,7 @@
               let statusClass = '';
               if (room.aq === '拒否') { // ★変更: statusAQ -> aq
 		            statusClass = 'status-refused';
-				  } else if (room.aq === '訪問可能') { // ★★★ 追加 ★★★
+				  } else if (room.aq === '拒否訪可') { // ★★★ 追加 ★★★
 		            statusClass = 'status-visitable';
 		        } else if (room.aq === '長期') {
 		            statusClass = 'status-long-term-aq';
