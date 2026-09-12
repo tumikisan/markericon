@@ -331,6 +331,9 @@
 	
 	.room-item.status-vacant { background-color: #e2e3e5; }
 	.room-item.status-vacant .room-item-name { color: #383d41; text-decoration: line-through; }
+
+	.room-item.status-visitable { background-color: #ffccbc; }
+	.room-item.status-visitable .room-item-name { color: #bf360c; font-weight: bold; }
 	
 	/* =========================================
 	   7. マーカー関連
@@ -1211,6 +1214,8 @@
             let backgroundColor = "#ffffff"; // デフォルトの色
 		    if (statusAQ === '拒否') {
 		        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
+				} else if (statusAQ === '訪問可能') {
+		        backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
 		    } else if (filterParam !== 'simple') {
 		        if (statusAQ === '長期') {
 		            backgroundColor = "#FFC107"; // 黄色
@@ -1239,6 +1244,8 @@
 
 		if (statusAQ === '拒否') {
         backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
+			 } else if (statusAQ === '訪問可能') {
+            backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
     } else if (filterParam !== 'simple') {
         if (statusAQ === '長期') {
             backgroundColor = "#FFC107"; // 黄色
@@ -1605,6 +1612,8 @@
               // 優先順位に従って判定
               if (room.aq === '拒否') {
                   statusClass = 'status-refused';
+				  } else if (room.aq === '訪問可能') { // ★拒否の次に優先判定
+				  statusClass = 'status-visitable';
               } else if (room.aq === '長期') {
 				  statusClass = 'status-long-term-aq';
 			  } else if (room.aq === '空') {
@@ -1704,6 +1713,8 @@
               let statusClass = '';
               if (room.aq === '拒否') { // ★変更: statusAQ -> aq
 		            statusClass = 'status-refused';
+				  } else if (room.aq === '訪問可能') { // ★★★ 追加 ★★★
+		            statusClass = 'status-visitable';
 		        } else if (room.aq === '長期') {
 		            statusClass = 'status-long-term-aq';
 		        } else if (room.aq === '空') {
@@ -1714,7 +1725,7 @@
 		        }
 
               // 既存のステータスクラスを一旦すべて削除
-              item.classList.remove('status-refused', 'status-long-term-aq', 'status-vacant', 'status-long-term-as');
+              item.classList.remove('status-refused', 'status-visitable', 'status-long-term-aq', 'status-vacant', 'status-long-term-as');
               
               // 新しいステータスクラスがあれば追加
               if (statusClass) {
