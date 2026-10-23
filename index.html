@@ -332,8 +332,13 @@
 	.room-item.status-vacant { background-color: #e2e3e5; }
 	.room-item.status-vacant .room-item-name { color: #383d41; text-decoration: line-through; }
 
-	.room-item.status-visitable { background-color: #ffccbc; }
-	.room-item.status-visitable .room-item-name { color: #bf360c; font-weight: bold; }
+	.room-item.status-visitable {
+		background: linear-gradient(115deg, #f8d7da 50%, #ffd6cc 50%);
+	}
+	.room-item.status-visitable .room-item-name {
+		color: #212529; /* または濃い赤茶色 #5c1d1d */
+	  font-weight: bold;
+	}
 	
 	/* =========================================
 	   7. マーカー関連
@@ -1211,21 +1216,22 @@
         // ★★★【追加】マーカーの色を更新するためのヘルパー関数 ★★★
         // この関数を定義することで、初期描画とクリック後の更新で同じロジックを使える
         function updateMarkerColor(div, statusAQ, statusAS) {
-            let backgroundColor = "#ffffff"; // デフォルトの色
+            let background = "#ffffff"; // デフォルト（単色）
 		    if (statusAQ === '拒否') {
-		        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
-				} else if (statusAQ === '拒否訪可') {
-		        backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
+		        background = "#DC3545";
+		    } else if (statusAQ === '拒否訪可') {
+		        // ★ 135度の角度で 赤(#DC3545) と 朱色(#FF5722) を50%で真っ二つに分ける
+		        background = "linear-gradient(135deg, #DC3545 50%, #FF5722 50%)";
 		    } else if (filterParam !== 'simple') {
 		        if (statusAQ === '長期') {
-		            backgroundColor = "#FFC107"; // 黄色
+		            background = "#FFC107";
 		        } else if (statusAQ === '空') {
-		            backgroundColor = "#343A40"; // 黒に近い色
+		            background = "#343A40";
 		        } else if (statusAS === '長期') {
-		            backgroundColor = "#28A745"; // 緑色
-		        }
-		    }
-            div.style.backgroundColor = backgroundColor;
+		            background = "#28A745"; // 緑色
+				}
+			}
+            div.style.background = background;
         }
         
         // 1. マーカーのコンテンツとなるdiv要素を作成
@@ -1236,24 +1242,24 @@
 	    const statusAS = markerData.as; // ★変更: statusAS -> as
 
         // ★★★ ここの判定ロジックを修正 ★★★
-        let backgroundColor = "#ffffff"; // デフォルトの色（白色など）
+        let background = "#ffffff";
 
-        let rawName = markerData.n || "?";
-        // ★【追加】読点「、」やスペースを削除する（「㊿、」→「㊿」、「51」→「51」になる）
-        let textContent = rawName.replace(/[,\s]/g, '');
-
+		let rawName = markerData.n || "?";
+		let textContent = rawName.replace(/[,\s]/g, '');
+		
 		if (statusAQ === '拒否') {
-        backgroundColor = "#DC3545"; // ★赤色はシンプルモード（simple）でも常に表示する
-			 } else if (statusAQ === '拒否訪可') {
-            backgroundColor = "#FF5722"; // ★赤寄りの橙色（シンプルモードでも常に表示）
-    } else if (filterParam !== 'simple') {
-        if (statusAQ === '長期') {
-            backgroundColor = "#FFC107"; // 黄色
-        } else if (statusAQ === '空') {
-            backgroundColor = "#343A40"; // 黒に近い色
-        } else if (statusAS === '長期') {
-            backgroundColor = "#28A745"; // 緑色
-        }
+		    background = "#DC3545";
+		} else if (statusAQ === '拒否訪可') {
+		    // ★ 斜め切り2色のグラデーション
+		    background = "linear-gradient(135deg, #DC3545 50%, #FF5722 50%)";
+		} else if (filterParam !== 'simple') {
+		    if (statusAQ === '長期') {
+		        background = "#FFC107";
+		    } else if (statusAQ === '空') {
+		        background = "#343A40";
+		    } else if (statusAS === '長期') {
+		        background = "#28A745"; // 緑色
+	        }
 		}
         // ★★★ 文字数に応じてフォントサイズを調整する ★★★
         // 1文字なら元の72px、2文字以上（51など）なら52pxに縮小し、文字間を少し詰める
@@ -1268,7 +1274,7 @@
           <div class="overlay p-overlay">P</div>
           <div class="spinner"></div>
         `;
-        markerDiv.style.backgroundColor = backgroundColor;
+        markerDiv.style.background = background;
         
         // 3. ★★★ HTML要素を追加した後で、各要素を取得する ★★★
         const textOverlay = markerDiv.querySelector('.marker-text');
